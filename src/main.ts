@@ -21,6 +21,7 @@ import { irisCentres } from './tracking/protocol';
 import { DebugView } from './ui/debugView';
 import { Hud } from './ui/hud';
 import { RulerOverlay } from './ui/ruler';
+import { TrackingScope } from './ui/scope';
 import { TuningPanel } from './ui/tuning';
 
 const WASM_PATH = '/mediapipe/wasm';
@@ -56,6 +57,7 @@ async function main(): Promise<void> {
   const hud = new Hud(container);
   const ruler = new RulerOverlay(container);
   const debugView = new DebugView(container);
+  const scope = new TrackingScope(container);
   // Recent log lines are mirrored into the HUD so they are visible without devtools.
   const messages: string[] = [];
   const log = (level: 'info' | 'warn', msg: string): void => {
@@ -165,7 +167,9 @@ async function main(): Promise<void> {
   const onSample = (s: EyeSample): void => {
     lastSample = s;
     sampleCount++;
-    eyeState.push({ ...s, eyeMm: add(s.eyeMm, eyeOffsetMm) });
+    const eyeMm = add(s.eyeMm, eyeOffsetMm);
+    eyeState.push({ ...s, eyeMm });
+    scope.pushRaw(s.tCaptureMs, eyeMm);
   };
   let trackerStatus = 'starting';
   tracker.onSample(onSample);
@@ -208,6 +212,12 @@ async function main(): Promise<void> {
         break;
       case 'g':
         tuning.toggle();
+        break;
+      case 't':
+        scope.toggle();
+        break;
+      case 'w':
+        app.glassFrame.visible = !app.glassFrame.visible;
         break;
       case 'p': {
         const text = snapshot();
@@ -343,6 +353,8 @@ async function main(): Promise<void> {
         : viewportRectMm(readBrowserMetrics(window), config.screen);
 
     app.render(scale(eyeRenderMm, 1 / 1000), scaleRect(rectMm, 1 / 1000));
+    scope.pushRendered(tDisplayMs, eyeRenderMm);
+    scope.draw(tFrameMs);
     ruler.update(rectWidth(rectMm) / window.innerWidth);
 
     frameCount++;
@@ -369,6 +381,7 @@ async function main(): Promise<void> {
         ? Math.min(Math.max(tDisplayMs - raw.tS * 1000, 0), config.tracking.prediction.max_lead_ms)
         : 0,
       viewportMm: { w: rectWidth(rectMm), h: rectHeight(rectMm) },
+      noiseMm: scope.noiseMm(tFrameMs),
       browser: browserLine(),
       camera: cameraLine(),
       warnings: messages,

@@ -1,6 +1,7 @@
 import { ACESFilmicToneMapping, Color, Scene, WebGLRenderer, type Group } from 'three';
 import type { ScreenRect } from '../math/offAxisProjection';
 import type { Vec3 } from '../math/vec';
+import { GlassFrame } from './glassFrame';
 import { OffAxisCamera } from './OffAxisCamera';
 
 /** Owns the renderer, scene graph and camera. The caller drives it once per animation frame. */
@@ -8,6 +9,7 @@ export class App {
   readonly renderer: WebGLRenderer;
   readonly scene = new Scene();
   readonly camera: OffAxisCamera;
+  readonly glassFrame = new GlassFrame();
   private sceneRoot: Group | undefined;
 
   constructor(container: HTMLElement, nearM: number, farM: number) {
@@ -18,6 +20,7 @@ export class App {
     container.appendChild(this.renderer.domElement);
     this.scene.background = new Color(0x05070a);
     this.camera = new OffAxisCamera(nearM, farM);
+    this.scene.add(this.glassFrame);
     this.resize();
   }
 
@@ -36,6 +39,7 @@ export class App {
 
   /** Render the scene for an eye and a screen rectangle, both in metres in the screen frame. */
   render(eyeM: Vec3, screenRectM: ScreenRect): void {
+    if (this.glassFrame.visible) this.glassFrame.update(screenRectM);
     this.camera.setScreen(screenRectM);
     this.camera.setEye(eyeM);
     this.renderer.render(this.scene, this.camera);

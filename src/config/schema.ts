@@ -62,7 +62,7 @@ export const trackingSchema = z.object({
 });
 
 export const lightingSchema = z.object({
-  enabled: z.boolean().default(true),
+  enabled: z.boolean().default(false),
   scene_lights_scale: z.number().nonnegative().default(1),
   environment: z
     .object({

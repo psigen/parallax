@@ -54,6 +54,7 @@ export class CameraLighting {
     private readonly config: LightingConfig,
     private readonly bounds: Box3,
   ) {
+    // Disabled in config: still constructed so `i` can turn it on, but starts off.
     this.mode = !config.enabled ? 'off' : config.key_lights.enabled ? 'full' : 'environment';
     const kl = config.key_lights;
     this.analysisWidth = kl.analysis_width_px;

@@ -39,7 +39,7 @@ describe('config/default.yaml', () => {
 describe('lighting config', () => {
   it('has the documented defaults', () => {
     const cfg = parseConfig(defaultYaml);
-    expect(cfg.lighting.enabled).toBe(true);
+    expect(cfg.lighting.enabled).toBe(false);
     expect(cfg.lighting.environment.update_hz).toBe(10);
     expect(cfg.lighting.key_lights.max_lights).toBe(4);
     expect(cfg.lighting.key_lights.brightness.gain).toBe(150);

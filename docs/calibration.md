@@ -62,6 +62,26 @@ Then work through these, in order; each isolates one factor.
    screen, which is ~3–5 % of the separation: expect a few percent of depth wobble that follows
    where you look. That is a limitation of the measurement, not the calibration.
 
+## "Far objects move with me"
+
+Relative to your line of sight, nothing behind the glass should ever move _with_ you; an object
+at depth `d` behind the glass moves on the glass by `Δx · d / (Z + d)`, always less than your
+own `Δx`, so it swings against you, by less the farther it is, and infinity stays put. If far
+content follows you, either the lateral estimate is exaggerated or both eyes are open and the
+flat display's stereo cue is winning. Separate them objectively:
+
+1. Put a ruler on the desk. Move your head a measured 100 mm sideways and watch the HUD
+   `eye mm` x. It must change by ~100. If it changes by much more, the lateral estimate is
+   wrong: check the `browser` line (`screen` must be the panel the config describes, 1512 wide on
+   the 14-inch MacBook at default scaling; on an external monitor the config's `width_mm` is
+   wrong for it) and the `viewport` line (302.4 mm wide in fullscreen).
+2. Open `?scene=reference`: posts at 0.3, 1, 3, 10 and 30 m. Line up the 30 m bar with a real
+   object a few metres behind the laptop (a door frame, a wall corner) and move your head. The
+   two should stay together; the 0.3 m post should swing against you. If the 30 m bar outruns
+   the real object, the scale is exaggerated; measure step 1.
+3. Close one eye (and set `render for` to that eye in `g`). If far markers now hold still,
+   the geometry is right and the two-eyed impression was the stereo conflict.
+
 ## "Looking at the screen centre looks down into the scene"
 
 Expected for a true window below eye level; see _Scene aim_ in [scene-authoring.md](scene-authoring.md).

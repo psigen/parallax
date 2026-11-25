@@ -17,10 +17,14 @@ export class EyeState {
 
   constructor(
     private config: TrackingConfig,
-    private readonly defaultEyeMm: Vec3,
+    private defaultEyeMm: Vec3,
   ) {
     this.filter = new OneEuroVec3(toParams(config));
     this.held = defaultEyeMm;
+  }
+
+  setDefaultEye(eyeMm: Vec3): void {
+    this.defaultEyeMm = eyeMm;
   }
 
   setConfig(config: TrackingConfig): void {

@@ -57,7 +57,7 @@ export class Hud {
       `browser   ${s.browser}`,
       `camera    ${s.camera}`,
       ...s.warnings.map((w) => `log       ${w}`),
-      `keys      h hud  d debug  g tuning  m ruler  f fullscreen  c calibrate  x clear-cal  p snapshot  r reset`,
+      `keys      h hud  d debug  g tuning  m ruler  f fullscreen  c calibrate  x clear-cal  o set-rest  O clear-rest  p snapshot  r reset`,
     ];
     this.el.textContent = lines.join('\n');
   }

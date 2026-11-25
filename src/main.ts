@@ -25,6 +25,21 @@ import { TuningPanel } from './ui/tuning';
 const WASM_PATH = '/mediapipe/wasm';
 const MODEL_PATH = '/models/face_landmarker.task';
 const focalKey = (cameraId: string) => `parallax.focal_px.${cameraId}`;
+const REST_KEY = 'parallax.rest_eye_mm';
+
+function readRestOverride(): [number, number, number] | undefined {
+  try {
+    const v = localStorage.getItem(REST_KEY);
+    if (!v) return undefined;
+    const arr: unknown = JSON.parse(v);
+    if (Array.isArray(arr) && arr.length === 3 && arr.every((n) => typeof n === 'number')) {
+      return arr as [number, number, number];
+    }
+  } catch {
+    /* ignore */
+  }
+  return undefined;
+}
 
 function readFocalOverride(cameraId: string): number | undefined {
   try {
@@ -61,15 +76,27 @@ async function main(): Promise<void> {
   for (const w of sceneWarnings) warn(`[scene] ${w.code}: ${w.message}`);
   app.setSceneRoot(root);
 
-  const [dx, dy, dz] = config.viewer.default_eye_mm;
-  const eyeState = new EyeState(config.tracking, v3(dx, dy, dz));
-  const tuning = new TuningPanel(config.tracking, (t) => {
-    eyeState.setConfig(t);
-    if (mpTracker) {
-      mpTracker.yawCorrection = t.yaw_correction;
-      mpTracker.eyeSelect = t.eye;
-    }
-  });
+  const restOverride = readRestOverride();
+  if (restOverride) log('info', `[rest] using stored rest eye ${restOverride.join(', ')} mm`);
+  const [dx, dy, dz] = restOverride ?? config.viewer.rest_eye_mm;
+  let restEyeMm = v3(dx, dy, dz);
+  const eyeState = new EyeState(config.tracking, restEyeMm);
+  const applyAim = (): void => {
+    app.setAim(config.rendering.aim_scene_at_rest_eye ? scale(restEyeMm, 1 / 1000) : null);
+  };
+  applyAim();
+  const tuning = new TuningPanel(
+    config.tracking,
+    config.rendering,
+    (t) => {
+      eyeState.setConfig(t);
+      if (mpTracker) {
+        mpTracker.yawCorrection = t.yaw_correction;
+        mpTracker.eyeSelect = t.eye;
+      }
+    },
+    () => applyAim(),
+  );
   // ?diag=1 logs the first few tracker results in full (matrix included) for offline checking.
   let diagLeft = params.get('diag') ? 5 : 0;
 
@@ -189,6 +216,39 @@ async function main(): Promise<void> {
         break;
       case 'r':
         eyeState.setConfig(config.tracking);
+        break;
+      case 'o': {
+        // Capture the current eye as the rest position: fallback on loss and the scene's aim.
+        const cur = eyeState.raw?.position;
+        if (!cur) {
+          warn('[rest] no tracked eye to capture');
+          break;
+        }
+        restEyeMm = v3(cur.x, cur.y, cur.z);
+        eyeState.setDefaultEye(restEyeMm);
+        applyAim();
+        const rounded = [restEyeMm.x, restEyeMm.y, restEyeMm.z].map((n) => Math.round(n));
+        try {
+          localStorage.setItem(REST_KEY, JSON.stringify(rounded));
+        } catch {
+          /* ignore */
+        }
+        log(
+          'info',
+          `[rest] rest eye set to ${rounded.join(', ')} mm. Paste into config: rest_eye_mm: [${rounded.join(', ')}]`,
+        );
+        break;
+      }
+      case 'O':
+        try {
+          localStorage.removeItem(REST_KEY);
+        } catch {
+          /* ignore */
+        }
+        restEyeMm = v3(...config.viewer.rest_eye_mm);
+        eyeState.setDefaultEye(restEyeMm);
+        applyAim();
+        log('info', '[rest] cleared stored rest eye; using the config value');
         break;
       case 'c': {
         if (!mpTracker) break;

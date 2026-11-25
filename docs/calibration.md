@@ -62,6 +62,15 @@ Then work through these, in order; each isolates one factor.
    screen, which is ~3–5 % of the separation: expect a few percent of depth wobble that follows
    where you look. That is a limitation of the measurement, not the calibration.
 
+## "Looking at the screen centre looks down into the scene"
+
+Expected for a true window below eye level; see _Scene aim_ in [scene-authoring.md](scene-authoring.md).
+Sit normally, look at the screen centre and press `o`: the scene is re-aimed at that position.
+If the view is still tilted after that, the eye's _y_ is being misestimated: with your eyes
+level with the camera, the HUD `eye mm` y should read about +95 (the camera's height above the
+display centre). A consistent offset points at `extrinsics.position_mm`; an offset that grows
+with distance points at `extrinsics.rotation_deg` (camera pitch).
+
 ## Viewport placement
 
 Press `m` to draw a 100 mm square. Measure it. If it is wrong, the browser's reported screen

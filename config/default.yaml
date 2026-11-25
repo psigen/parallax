@@ -18,8 +18,12 @@ viewer:
   # Interpupillary distance of the person watching. Depth is derived from how many pixels apart
   # the irises appear, so this scales every distance estimate.
   ipd_mm: 63
-  # Eye position used before tracking locks on and after the face is lost.
-  default_eye_mm: [0, 0, 550]
+  # Where your eyes usually are, relative to the display centre (mm). Used before tracking locks
+  # on, after the face is lost, and (if rendering.aim_scene_at_rest_eye) to pose the scene so that
+  # looking at the screen centre from here looks straight down the scene's axis. A laptop display
+  # is well below eye level, so this is typically [0, 100..250, 450..650]. Press `o` while
+  # tracking to capture your current position; the console prints the line to paste here.
+  rest_eye_mm: [0, 150, 550]
 
 default_camera: mbp14-builtin
 
@@ -82,10 +86,14 @@ tracking:
   filter: { min_cutoff_hz: 1.0, beta: 0.05, d_cutoff_hz: 1.0 }
   # Extrapolate the filtered eye position to the frame's display time to hide capture latency.
   prediction: { enabled: true, extra_lead_ms: 0, max_lead_ms: 80 }
-  # After this long without a face, ease back to default_eye_mm.
+  # After this long without a face, ease back to rest_eye_mm.
   loss_timeout_ms: 500
 
 rendering:
   scene_url: /scenes/room.glb
   near_mm: 10
   far_mm: 20000
+  # Rotate the scene about the display centre so its axis points at viewer.rest_eye_mm. The
+  # parallax stays geometrically exact; this only chooses how the scene is posed behind the glass.
+  # false: the scene's -z is the display normal (a true desk-height window: you look down into it).
+  aim_scene_at_rest_eye: true

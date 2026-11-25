@@ -150,6 +150,8 @@ async function main(): Promise<void> {
   // ?viewport=full assumes the viewport covers the whole display (exact in fullscreen, and the
   // only sane choice when the browser reports bogus screen metrics, e.g. headless).
   const viewportMode = params.get('viewport') ?? 'auto';
+  // ?glass=1 shows the screen-plane frame from the start (same as pressing `w`).
+  app.glassFrame.visible = params.get('glass') === '1';
 
   // Constant added to every tracked eye position. Default: the negated camera position, so an
   // eye centred in the camera image reads x 0, y 0. `o` re-zeroes only the Y component.

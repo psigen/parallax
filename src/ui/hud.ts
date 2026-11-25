@@ -47,8 +47,8 @@ export class Hud {
       `latency   capture→main ${f(s.trackerLatencyMs, 1)} ms   inference ${f(s.inferenceMs, 1)} ms`,
       `          capture→display ${f(s.captureToDisplayMs, 1)} ms   predicted lead ${f(s.predictionLeadMs, 1)} ms`,
       `viewport  ${f(s.viewportMm.w, 1)} x ${f(s.viewportMm.h, 1)} mm`,
-      ...s.warnings.map((w) => `warn      ${w}`),
-      `keys      h hud  m ruler  f fullscreen  r reset`,
+      ...s.warnings.map((w) => `log       ${w}`),
+      `keys      h hud  d debug  g tuning  m ruler  f fullscreen  c calibrate  x clear-cal  r reset`,
     ];
     this.el.textContent = lines.join('\n');
   }

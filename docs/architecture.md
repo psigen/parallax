@@ -40,6 +40,7 @@ src/tracking/             camera source, MediaPipe worker, Tracker interface, mo
 src/render/               OffAxisCamera, glTF scene loader, render loop
 src/ui/                   HUD, debug overlay, key bindings
 scripts/build-room.ts     generates public/scenes/room.glb
+scripts/smoke.ts          headless Chrome end-to-end boot check with a fake camera (npm run smoke)
 public/models/            vendored face_landmarker.task (Apache-2.0)
 tests/                    Vitest suites (Node, no browser)
 docs/                     this documentation

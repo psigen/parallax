@@ -82,6 +82,9 @@ export function cameraToImage(pCam: Vec3, cam: CameraModel): Vec2 {
   return { x: u / k.width_px, y: v / k.height_px };
 }
 
+/** Which point to render for: the midpoint of the irises, or one eye (close the other to judge correctness). */
+export type EyeSelect = 'cyclopean' | 'left' | 'right';
+
 export interface EyeEstimate {
   /** Cyclopean eye position in the screen frame, mm. */
   eyeMm: Vec3;
@@ -96,6 +99,7 @@ export function estimateEye(
   cam: CameraModel,
   ipdMm: number,
   yawCorrection = true,
+  eyeSelect: EyeSelect = 'cyclopean',
 ): EyeEstimate {
   const { intrinsics: k } = cam;
   const dx = (obs.left.x - obs.right.x) * k.width_px;
@@ -106,8 +110,13 @@ export function estimateEye(
   }
   const foreshorten = yawCorrection ? Math.max(0.2, Math.abs(Math.cos(obs.yawRad))) : 1;
   const depthMm = (k.fx_px * ipdMm * foreshorten) / irisSeparationPx;
-  const mid: Vec2 = { x: (obs.left.x + obs.right.x) / 2, y: (obs.left.y + obs.right.y) / 2 };
-  const eyeMm = cameraToScreen(imageToCamera(mid, depthMm, cam), cam);
+  const point: Vec2 =
+    eyeSelect === 'left'
+      ? obs.left
+      : eyeSelect === 'right'
+        ? obs.right
+        : { x: (obs.left.x + obs.right.x) / 2, y: (obs.left.y + obs.right.y) / 2 };
+  const eyeMm = cameraToScreen(imageToCamera(point, depthMm, cam), cam);
   return { eyeMm, depthMm, irisSeparationPx };
 }
 

@@ -31,6 +31,13 @@ different origin, so the worker reports only _durations_ (inference ms) and the 
 attaches capture and receipt times. `detectForVideo` requires strictly increasing timestamps;
 the worker enforces that.
 
+## Which point is rendered
+
+`tracking.eye` picks the midpoint of the irises (`cyclopean`, default) or one eye. The
+projection is only exact for a single centre of projection, so the one-eye modes exist to judge
+correctness with the other eye closed. `tracking.parallax_gain` scales the eye's lateral offset
+(1.0 = correct); it is a diagnostic knob.
+
 ## Trackers
 
 `Tracker` (`types.ts`) is "something that emits timestamped `EyeSample`s". Implementations:

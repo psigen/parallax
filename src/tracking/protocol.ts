@@ -28,6 +28,8 @@ export type WorkerResponse =
       landmarks: Float32Array;
       yawRad: number;
       pitchRad: number;
+      /** MediaPipe's 4x4 facial transformation matrix (16 numbers) or empty if unavailable. */
+      matrix: number[];
     };
 
 export function landmarkAt(landmarks: Float32Array, index: number): Vec2 {
@@ -47,6 +49,21 @@ export function irisCentres(landmarks: Float32Array): { left: Vec2; right: Vec2 
  * axis is the third basis column. Yaw sign depends on whether the data is row- or column-major,
  * which is why only magnitudes are relied on downstream (foreshortening is even in yaw).
  */
+/**
+ * Translation of MediaPipe's face matrix, in cm, assuming column-major storage (translation in
+ * elements 12..14). If it were row-major the translation would be in 3, 7, 11; we pick whichever
+ * triple has the larger magnitude, since a face is tens of cm away and the other triple is ~0.
+ */
+export function faceTranslationCm(
+  data: ArrayLike<number>,
+): { x: number; y: number; z: number } | undefined {
+  if (data.length < 16) return undefined;
+  const cm = { x: data[12] ?? 0, y: data[13] ?? 0, z: data[14] ?? 0 };
+  const rm = { x: data[3] ?? 0, y: data[7] ?? 0, z: data[11] ?? 0 };
+  const mag = (v: { x: number; y: number; z: number }) => Math.hypot(v.x, v.y, v.z);
+  return mag(cm) >= mag(rm) ? cm : rm;
+}
+
 export function headAnglesFromMatrix(data: ArrayLike<number>): {
   yawRad: number;
   pitchRad: number;

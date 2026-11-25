@@ -16,6 +16,7 @@ import { MediapipeTracker } from './tracking/mediapipeTracker';
 import { MouseTracker } from './tracking/mouseTracker';
 import { StaticTracker } from './tracking/staticTracker';
 import type { EyeSample, Tracker } from './tracking/types';
+import { irisCentres } from './tracking/protocol';
 import { DebugView } from './ui/debugView';
 import { Hud } from './ui/hud';
 import { RulerOverlay } from './ui/ruler';
@@ -62,7 +63,15 @@ async function main(): Promise<void> {
 
   const [dx, dy, dz] = config.viewer.default_eye_mm;
   const eyeState = new EyeState(config.tracking, v3(dx, dy, dz));
-  const tuning = new TuningPanel(config.tracking, (t) => eyeState.setConfig(t));
+  const tuning = new TuningPanel(config.tracking, (t) => {
+    eyeState.setConfig(t);
+    if (mpTracker) {
+      mpTracker.yawCorrection = t.yaw_correction;
+      mpTracker.eyeSelect = t.eye;
+    }
+  });
+  // ?diag=1 logs the first few tracker results in full (matrix included) for offline checking.
+  let diagLeft = params.get('diag') ? 5 : 0;
 
   // Tracker selection: ?tracker=camera (default) | mouse | static (&eye=x,y,z); ?camera=<id>.
   const trackerKind = params.get('tracker') ?? 'camera';
@@ -88,10 +97,20 @@ async function main(): Promise<void> {
       yawCorrection: config.tracking.yaw_correction,
       wasmPath: WASM_PATH,
       modelPath: MODEL_PATH,
+      eyeSelect: config.tracking.eye,
       onLog: (m) => log('info', m),
       ...(focalOverridePx !== undefined ? { focalOverridePx } : {}),
     });
-    mpTracker.onDebug((f) => debugView.draw(f));
+    mpTracker.onDebug((f) => {
+      debugView.draw(f);
+      if (diagLeft > 0 && f.found) {
+        diagLeft--;
+        const { left, right } = irisCentres(f.landmarks);
+        console.info(
+          `[diag] iris L=(${left.x.toFixed(4)},${left.y.toFixed(4)}) R=(${right.x.toFixed(4)},${right.y.toFixed(4)}) sep=${f.irisSeparationPx.toFixed(2)}px depth=${f.depthMm.toFixed(1)}mm yaw=${f.yawRad.toFixed(3)} pitch=${f.pitchRad.toFixed(3)} mpT=${JSON.stringify(f.faceTranslationCm)} matrix=${JSON.stringify(f.matrix.map((v) => Number(v.toFixed(3))))}`,
+        );
+      }
+    });
     tracker = mpTracker;
   }
   // ?viewport=full assumes the viewport covers the whole display (exact in fullscreen, and the
@@ -155,6 +174,15 @@ async function main(): Promise<void> {
       case 'g':
         tuning.toggle();
         break;
+      case 'p': {
+        const text = snapshot();
+        console.info(text);
+        navigator.clipboard.writeText(text).then(
+          () => log('info', '[snapshot] copied to clipboard (also in the console)'),
+          () => log('warn', '[snapshot] clipboard unavailable; see the console'),
+        );
+        break;
+      }
       case 'f':
         if (document.fullscreenElement) void document.exitFullscreen();
         else void document.documentElement.requestFullscreen();
@@ -200,6 +228,32 @@ async function main(): Promise<void> {
     }
   });
 
+  const browserLine = (): string => {
+    const m = readBrowserMetrics(window);
+    return `screen ${m.screenWidth}x${m.screenHeight}  win @${m.screenX},${m.screenY}  outer ${m.outerWidth}x${m.outerHeight}  inner ${m.innerWidth}x${m.innerHeight}  dpr ${window.devicePixelRatio}  fs ${document.fullscreenElement ? 'yes' : 'no'}  mode ${viewportMode}`;
+  };
+  const cameraLine = (): string => {
+    if (!mpTracker) return tracker.name;
+    const s = mpTracker.settings;
+    const k = mpTracker.model.intrinsics;
+    return `${s ? `${s.label} ${s.width}x${s.height}@${s.frameRate}` : 'starting'}  fx ${k.fx_px.toFixed(0)}px @${k.width_px}  ipd ${config.viewer.ipd_mm}  eye ${mpTracker.eyeSelect}  yawcorr ${mpTracker.yawCorrection ? 'on' : 'off'}  dropped ${mpTracker.droppedFrames}`;
+  };
+
+  const snapshot = (): string => {
+    const d = mpTracker?.lastDebug;
+    const debugLine = d
+      ? d.found
+        ? `debug     iris ${d.irisSeparationPx.toFixed(1)}px depth ${d.depthMm.toFixed(0)}mm yaw ${((d.yawRad * 180) / Math.PI).toFixed(1)}° pitch ${((d.pitchRad * 180) / Math.PI).toFixed(1)}° mediapipe ${d.faceTranslationCm ? `${(d.faceTranslationCm.x * 10).toFixed(0)},${(d.faceTranslationCm.y * 10).toFixed(0)},${(d.faceTranslationCm.z * 10).toFixed(0)}mm` : 'n/a'}`
+        : 'debug     no face'
+      : 'debug     n/a';
+    return [
+      `snapshot  ${new Date().toISOString()}  ${location.href}`,
+      hud.text,
+      debugLine,
+      `config    ${JSON.stringify(config.tracking)}`,
+    ].join('\n');
+  };
+
   const frame = (tFrameMs: number): void => {
     if (lastFrameMs > 0) {
       const dt = tFrameMs - lastFrameMs;
@@ -209,6 +263,8 @@ async function main(): Promise<void> {
 
     const tDisplayMs = tFrameMs + frameIntervalMs;
     const eyeMm = eyeState.eyeAt(tDisplayMs);
+    const gain = config.tracking.parallax_gain;
+    const eyeRenderMm = gain === 1 ? eyeMm : v3(eyeMm.x * gain, eyeMm.y * gain, eyeMm.z);
 
     const override = config.screen.viewport_override_mm;
     const rectMm = override
@@ -222,7 +278,7 @@ async function main(): Promise<void> {
         ? fullScreenRectMm(config.screen)
         : viewportRectMm(readBrowserMetrics(window), config.screen);
 
-    app.render(scale(eyeMm, 1 / 1000), scaleRect(rectMm, 1 / 1000));
+    app.render(scale(eyeRenderMm, 1 / 1000), scaleRect(rectMm, 1 / 1000));
     ruler.update(rectWidth(rectMm) / window.innerWidth);
 
     frameCount++;
@@ -249,6 +305,8 @@ async function main(): Promise<void> {
         ? Math.min(Math.max(tDisplayMs - raw.tS * 1000, 0), config.tracking.prediction.max_lead_ms)
         : 0,
       viewportMm: { w: rectWidth(rectMm), h: rectHeight(rectMm) },
+      browser: browserLine(),
+      camera: cameraLine(),
       warnings: messages,
     });
     requestAnimationFrame(frame);

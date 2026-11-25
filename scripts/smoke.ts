@@ -3,6 +3,7 @@
  * webcam, collects console output and the HUD text for a few seconds, and saves a screenshot.
  *
  *   npm run build && npm run smoke -- [url-query] [seconds] [screenshot.png]
+ *   FAKE_VIDEO=face.y4m npm run smoke -- "?diag=1"   # feed a video file as the webcam
  *
  * Exits non-zero on uncaught page exceptions. Useful for checking the app boots end to end
  * (worker, wasm, camera plumbing) without a person in front of a camera.
@@ -88,6 +89,9 @@ async function main(): Promise<number> {
       '--remote-debugging-port=0',
       '--use-fake-device-for-media-stream',
       '--use-fake-ui-for-media-stream',
+      ...(process.env.FAKE_VIDEO
+        ? [`--use-file-for-fake-video-capture=${process.env.FAKE_VIDEO}`]
+        : []),
       '--use-angle=swiftshader',
       '--enable-unsafe-swiftshader',
       '--window-size=1512,982',

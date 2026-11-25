@@ -72,6 +72,12 @@ tracking:
   depth_method: iris_ipd
   # Use head yaw from the face matrix to undo foreshortening of the iris separation.
   yaw_correction: true
+  # Which point to render for: cyclopean (midpoint of the irises), left or right eye. The
+  # geometry is exact for one eye only; close the other and pick it to judge correctness.
+  eye: cyclopean
+  # Multiplies the eye's lateral offset from the screen centre. 1.0 is geometrically correct;
+  # a diagnostic knob, not a feature.
+  parallax_gain: 1.0
   # One Euro filter. Lower min_cutoff = smoother but laggier at rest; higher beta = less lag when moving.
   filter: { min_cutoff_hz: 1.0, beta: 0.05, d_cutoff_hz: 1.0 }
   # Extrapolate the filtered eye position to the frame's display time to hide capture latency.

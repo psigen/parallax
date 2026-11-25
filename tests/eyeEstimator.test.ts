@@ -138,3 +138,15 @@ describe('calibrateFocalLength', () => {
     expect(calibrateFocalLength(obs, mbp, IPD, depthCam)).toBeCloseTo(890, 6);
   });
 });
+
+describe('estimateEye eye selection', () => {
+  it('renders for the chosen eye, offset by half the IPD', () => {
+    const truth = v3(0, 0, 550);
+    const obs = observe(truth, mbp);
+    const left = estimateEye(obs, mbp, IPD, true, 'left').eyeMm;
+    const right = estimateEye(obs, mbp, IPD, true, 'right').eyeMm;
+    expect(left.x).toBeCloseTo(IPD / 2, 6);
+    expect(right.x).toBeCloseTo(-IPD / 2, 6);
+    expect(left.z).toBeCloseTo(550, 6);
+  });
+});

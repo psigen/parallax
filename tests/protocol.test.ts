@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  faceTranslationCm,
   headAnglesFromMatrix,
   irisCentres,
   LANDMARK_COUNT,
@@ -51,5 +52,19 @@ describe('irisCentres', () => {
     expect(right.x).toBeCloseTo(0.4);
     // Un-mirrored frame: the subject's left eye is on the image's right.
     expect(left.x).toBeGreaterThan(right.x);
+  });
+});
+
+describe('faceTranslationCm', () => {
+  it('reads a column-major translation', () => {
+    const m = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1.5, -2, -55, 1];
+    expect(faceTranslationCm(m)).toEqual({ x: 1.5, y: -2, z: -55 });
+  });
+  it('reads a row-major translation', () => {
+    const m = [1, 0, 0, 1.5, 0, 1, 0, -2, 0, 0, 1, -55, 0, 0, 0, 1];
+    expect(faceTranslationCm(m)).toEqual({ x: 1.5, y: -2, z: -55 });
+  });
+  it('returns undefined for malformed input', () => {
+    expect(faceTranslationCm([])).toBeUndefined();
   });
 });

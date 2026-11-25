@@ -61,9 +61,16 @@ export class DebugView {
     ctx.restore();
     ctx.fillStyle = f.found ? '#9f9' : '#f99';
     ctx.font = '11px ui-monospace, monospace';
-    const text = f.found
-      ? `iris ${f.irisSeparationPx.toFixed(1)} px  depth ${f.depthMm.toFixed(0)} mm  yaw ${((f.yawRad * 180) / Math.PI).toFixed(0)}°  pitch ${((f.pitchRad * 180) / Math.PI).toFixed(0)}°  ${f.inferenceMs.toFixed(1)} ms`
-      : `no face  (${f.inferenceMs.toFixed(1)} ms)`;
-    ctx.fillText(text, 4, h - 6);
+    const deg = (r: number) => ((r * 180) / Math.PI).toFixed(0);
+    const t = f.faceTranslationCm;
+    const lines = f.found
+      ? [
+          `iris ${f.irisSeparationPx.toFixed(1)} px  depth ${f.depthMm.toFixed(0)} mm  yaw ${deg(f.yawRad)}°  pitch ${deg(f.pitchRad)}°  ${f.inferenceMs.toFixed(1)} ms`,
+          t
+            ? `mediapipe xyz ${(t.x * 10).toFixed(0)} ${(t.y * 10).toFixed(0)} ${(t.z * 10).toFixed(0)} mm (its own camera model)`
+            : '',
+        ]
+      : [`no face  (${f.inferenceMs.toFixed(1)} ms)`];
+    lines.forEach((line, i) => ctx.fillText(line, 4, h - 6 - (lines.length - 1 - i) * 13));
   }
 }

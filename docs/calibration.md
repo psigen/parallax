@@ -31,6 +31,37 @@ than a few percent, the camera is probably reframing (see above) or the IPD is o
 A sanity check: after calibration the `depth` in the debug view (`d`) should track a tape measure
 to within a few cm from 300 to 900 mm.
 
+## Diagnosing "the scale feels wrong"
+
+Press `p` to copy a diagnostic snapshot (HUD, browser metrics, camera settings, the last
+tracker reading and the tracking config) to the clipboard; paste it into an issue or a chat.
+Then work through these, in order; each isolates one factor.
+
+1. **Is the depth right?** Open the debug view (`d`). Calibrate (`c`) at 500 mm, then move to
+   a measured 300 mm and 700 mm. The `depth` readout should match within ~5 %. If it drifts
+   more, suspect: Center Stage/zoom reframing (watch the preview: does the crop change?), an IPD
+   that is not yours, or large head yaw (the `yaw` readout should be near 0° when facing the
+   camera; toggle `yaw correction` in the tuning panel (`g`) and see if depth becomes stable).
+2. **Is the viewport mapping right?** `m` draws a 100 mm square; measure it. Compare the
+   `browser` HUD line in fullscreen: on a 14-inch MacBook Pro at default scaling, `inner` should
+   be 1512 wide. If the browser leaves a band for the notch, `inner` height is less than
+   `screen` height and the window is shifted down; the mapping handles that only if
+   `screenY`/`outerHeight` report it. `?viewport=full` ignores all of that and assumes the
+   viewport is the whole panel.
+3. **Is it geometry or perception?** The projection is exact for _one_ eye. Close one eye and
+   set `render for` in the tuning panel to that eye. If the window illusion is now convincing
+   (objects on the glass stay put, the room edges are rigid), the math is right and what felt
+   wrong with both eyes open is the stereo conflict: a flat display shows both eyes the same
+   image, which the brain reads as "flat", and it fights the motion parallax. That is inherent to
+   a monocular display.
+4. **Quantify the residual.** `parallax gain` scales the eye's lateral offset. If some gain other
+   than 1.0 "feels right" with one eye closed, the depth scale is off by roughly that factor:
+   objects behind the glass move by `Δx · d / (Z + d)`, so an under-estimated `Z` exaggerates
+   motion (you would prefer gain < 1). Re-check step 1.
+5. **Iris centres move with gaze.** The iris centre shifts a couple of mm as you look around the
+   screen, which is ~3–5 % of the separation: expect a few percent of depth wobble that follows
+   where you look. That is a limitation of the measurement, not the calibration.
+
 ## Viewport placement
 
 Press `m` to draw a 100 mm square. Measure it. If it is wrong, the browser's reported screen

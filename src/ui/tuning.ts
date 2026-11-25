@@ -16,6 +16,10 @@ export class TuningPanel {
     p.add(tracking.prediction, 'extra_lead_ms', -50, 150, 1).name('extra lead ms');
     p.add(tracking.prediction, 'max_lead_ms', 0, 200, 1).name('max lead ms');
     this.gui.add(tracking, 'loss_timeout_ms', 100, 3000, 50).name('loss timeout ms');
+    const e = this.gui.addFolder('eye model');
+    e.add(tracking, 'eye', ['cyclopean', 'left', 'right']).name('render for');
+    e.add(tracking, 'yaw_correction').name('yaw correction');
+    e.add(tracking, 'parallax_gain', 0.25, 2, 0.05).name('parallax gain');
     this.gui.onChange(() => onChange(tracking));
     this.gui.hide();
   }

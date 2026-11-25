@@ -3,10 +3,16 @@ import {
   calibrateFocalLength,
   estimateEye,
   type CameraModel,
+  type EyeSelect,
   type IrisObservation,
 } from '../math/eyeEstimator';
 import { CameraSource, type CameraSettings } from './cameraSource';
-import { irisCentres, type WorkerRequest, type WorkerResponse } from './protocol';
+import {
+  faceTranslationCm,
+  irisCentres,
+  type WorkerRequest,
+  type WorkerResponse,
+} from './protocol';
 import { SampleEmitter, type EyeSampleListener, type Tracker } from './types';
 
 export interface TrackerDebugFrame {
@@ -17,6 +23,10 @@ export interface TrackerDebugFrame {
   pitchRad: number;
   irisSeparationPx: number;
   depthMm: number;
+  /** MediaPipe's own translation estimate (cm, its virtual camera), for cross-checking. */
+  faceTranslationCm: { x: number; y: number; z: number } | undefined;
+  /** Raw MediaPipe matrix (16 numbers) or empty. */
+  matrix: number[];
   inferenceMs: number;
 }
 
@@ -28,6 +38,7 @@ export interface MediapipeTrackerOptions {
   onLog?: (message: string) => void;
   ipdMm: number;
   yawCorrection: boolean;
+  eyeSelect?: EyeSelect;
   wasmPath: string;
   modelPath: string;
   /** Calibrated focal length override (px at the intrinsics' reference width), if any. */
@@ -51,9 +62,15 @@ export class MediapipeTracker implements Tracker {
   settings: CameraSettings | undefined;
   delegate: 'GPU' | 'CPU' | undefined;
   droppedFrames = 0;
+  /** Live-tunable. */
+  yawCorrection: boolean;
+  eyeSelect: EyeSelect;
+  lastDebug: TrackerDebugFrame | undefined;
 
   constructor(private readonly opts: MediapipeTrackerOptions) {
     this.name = `mediapipe:${opts.camera.id}`;
+    this.yawCorrection = opts.yawCorrection;
+    this.eyeSelect = opts.eyeSelect ?? 'cyclopean';
     const intrinsics = { ...opts.camera.intrinsics };
     if (opts.focalOverridePx !== undefined) {
       intrinsics.fx_px = opts.focalOverridePx;
@@ -171,7 +188,7 @@ export class MediapipeTracker implements Tracker {
 
     if (!msg.found) {
       this.lastObservation = undefined;
-      this.debugListener?.({
+      this.lastDebug = {
         video: this.source.video,
         found: false,
         landmarks: msg.landmarks,
@@ -179,14 +196,17 @@ export class MediapipeTracker implements Tracker {
         pitchRad: 0,
         irisSeparationPx: 0,
         depthMm: 0,
+        faceTranslationCm: undefined,
+        matrix: [],
         inferenceMs: msg.inferenceMs,
-      });
+      };
+      this.debugListener?.(this.lastDebug);
       return;
     }
     const { left, right } = irisCentres(msg.landmarks);
     const obs: IrisObservation = { left, right, yawRad: msg.yawRad };
     this.lastObservation = obs;
-    const est = estimateEye(obs, this.model, this.opts.ipdMm, this.opts.yawCorrection);
+    const est = estimateEye(obs, this.model, this.opts.ipdMm, this.yawCorrection, this.eyeSelect);
     this.emitter.emit({
       eyeMm: est.eyeMm,
       tCaptureMs: captureMs,
@@ -197,7 +217,7 @@ export class MediapipeTracker implements Tracker {
       },
       confidence: 1,
     });
-    this.debugListener?.({
+    this.lastDebug = {
       video: this.source.video,
       found: true,
       landmarks: msg.landmarks,
@@ -205,7 +225,10 @@ export class MediapipeTracker implements Tracker {
       pitchRad: msg.pitchRad,
       irisSeparationPx: est.irisSeparationPx,
       depthMm: est.depthMm,
+      faceTranslationCm: faceTranslationCm(msg.matrix),
+      matrix: msg.matrix,
       inferenceMs: msg.inferenceMs,
-    });
+    };
+    this.debugListener?.(this.lastDebug);
   }
 }

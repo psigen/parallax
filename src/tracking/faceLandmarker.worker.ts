@@ -71,6 +71,7 @@ function detect(msg: Extract<WorkerRequest, { type: 'frame' }>): void {
       landmarks: new Float32Array(0),
       yawRad: 0,
       pitchRad: 0,
+      matrix: [],
     });
     return;
   }
@@ -93,6 +94,7 @@ function detect(msg: Extract<WorkerRequest, { type: 'frame' }>): void {
       found: true,
       landmarks,
       ...angles,
+      matrix: matrix ? Array.from(matrix.data) : [],
     },
     [landmarks.buffer],
   );

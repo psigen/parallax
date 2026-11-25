@@ -11,6 +11,9 @@ export interface HudStats {
   captureToDisplayMs: number;
   predictionLeadMs: number;
   viewportMm: { w: number; h: number };
+  /** Raw browser metrics behind the viewport mapping, for diagnosing placement. */
+  browser: string;
+  camera: string;
   warnings: string[];
 }
 
@@ -38,6 +41,10 @@ export class Hud {
     this.el.style.display = this.el.style.display === 'none' ? 'block' : 'none';
   }
 
+  get text(): string {
+    return this.el.textContent ?? '';
+  }
+
   update(s: HudStats): void {
     const f = (n: number, d = 0) => n.toFixed(d).padStart(6);
     const lines = [
@@ -47,8 +54,10 @@ export class Hud {
       `latency   capture→main ${f(s.trackerLatencyMs, 1)} ms   inference ${f(s.inferenceMs, 1)} ms`,
       `          capture→display ${f(s.captureToDisplayMs, 1)} ms   predicted lead ${f(s.predictionLeadMs, 1)} ms`,
       `viewport  ${f(s.viewportMm.w, 1)} x ${f(s.viewportMm.h, 1)} mm`,
+      `browser   ${s.browser}`,
+      `camera    ${s.camera}`,
       ...s.warnings.map((w) => `log       ${w}`),
-      `keys      h hud  d debug  g tuning  m ruler  f fullscreen  c calibrate  x clear-cal  r reset`,
+      `keys      h hud  d debug  g tuning  m ruler  f fullscreen  c calibrate  x clear-cal  p snapshot  r reset`,
     ];
     this.el.textContent = lines.join('\n');
   }

@@ -46,6 +46,8 @@ export const cameraSchema = z.object({
 export const trackingSchema = z.object({
   depth_method: z.enum(['iris_ipd', 'face_matrix']).default('iris_ipd'),
   yaw_correction: z.boolean().default(true),
+  eye: z.enum(['cyclopean', 'left', 'right']).default('cyclopean'),
+  parallax_gain: z.number().positive().default(1),
   filter: z.object({
     min_cutoff_hz: z.number().positive(),
     beta: z.number().nonnegative(),

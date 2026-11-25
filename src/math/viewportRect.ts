@@ -42,6 +42,16 @@ export function viewportRectMm(m: BrowserMetrics, screen: PhysicalScreen): Scree
   };
 }
 
+/** The rectangle of the whole display: what the viewport covers in fullscreen. */
+export function fullScreenRectMm(screen: PhysicalScreen): ScreenRect {
+  return {
+    left: -screen.width_mm / 2,
+    right: screen.width_mm / 2,
+    bottom: -screen.height_mm / 2,
+    top: screen.height_mm / 2,
+  };
+}
+
 export function readBrowserMetrics(w: Window): BrowserMetrics {
   return {
     screenWidth: w.screen.width,

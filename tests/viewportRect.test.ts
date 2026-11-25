@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  fullScreenRectMm,
   rectHeight,
   rectWidth,
   viewportRectMm,
@@ -60,5 +61,15 @@ describe('viewportRectMm', () => {
     );
     expect(rectWidth(r)).toBeCloseTo(302.4);
     expect(rectHeight(r)).toBeCloseTo(945 * 0.2);
+  });
+});
+
+describe('fullScreenRectMm', () => {
+  it('is the display rectangle centred on the origin', () => {
+    const r = fullScreenRectMm(mbp14);
+    expect(r.left).toBeCloseTo(-151.2);
+    expect(r.right).toBeCloseTo(151.2);
+    expect(r.top).toBeCloseTo(98.2);
+    expect(r.bottom).toBeCloseTo(-98.2);
   });
 });

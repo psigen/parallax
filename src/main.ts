@@ -26,11 +26,11 @@ import { TuningPanel } from './ui/tuning';
 const WASM_PATH = '/mediapipe/wasm';
 const MODEL_PATH = '/models/face_landmarker.task';
 const focalKey = (cameraId: string) => `parallax.focal_px.${cameraId}`;
-const REST_KEY = 'parallax.rest_eye_mm';
+const OFFSET_KEY = 'parallax.eye_offset_mm';
 
-function readRestOverride(): [number, number, number] | undefined {
+function readOffsetOverride(): [number, number, number] | undefined {
   try {
-    const v = localStorage.getItem(REST_KEY);
+    const v = localStorage.getItem(OFFSET_KEY);
     if (!v) return undefined;
     const arr: unknown = JSON.parse(v);
     if (Array.isArray(arr) && arr.length === 3 && arr.every((n) => typeof n === 'number')) {
@@ -85,16 +85,18 @@ async function main(): Promise<void> {
     app.setSceneRoot(root);
   }
 
-  const restOverride = readRestOverride();
-  if (restOverride) log('info', `[rest] using stored rest eye ${restOverride.join(', ')} mm`);
-  const [dx, dy, dz] = restOverride ?? config.viewer.rest_eye_mm;
-  let restEyeMm = v3(dx, dy, dz);
-  const eyeState = new EyeState(config.tracking, restEyeMm);
-  const [offX, offY, offZ] = config.viewer.eye_offset_mm;
-  const eyeOffsetMm = v3(offX, offY, offZ);
-  const hasOffset = offX !== 0 || offY !== 0 || offZ !== 0;
-  if (hasOffset)
-    log('info', `[viewer] applying eye offset ${config.viewer.eye_offset_mm.join(', ')} mm`);
+  const [dx, dy, dz] = config.viewer.rest_eye_mm;
+  const eyeState = new EyeState(config.tracking, v3(dx, dy, dz));
+  // Constant added to every tracked eye position. `o` sets it so the current x/y read as zero.
+  const offsetOverride = readOffsetOverride();
+  const [offX, offY, offZ] = offsetOverride ?? config.viewer.eye_offset_mm;
+  let eyeOffsetMm = v3(offX, offY, offZ);
+  if (offX !== 0 || offY !== 0 || offZ !== 0) {
+    log(
+      'info',
+      `[viewer] eye offset ${[offX, offY, offZ].join(', ')} mm${offsetOverride ? ' (stored)' : ''}`,
+    );
+  }
   const tuning = new TuningPanel(config.tracking, (t) => {
     eyeState.setConfig(t);
     if (mpTracker) {
@@ -162,7 +164,7 @@ async function main(): Promise<void> {
   const onSample = (s: EyeSample): void => {
     lastSample = s;
     sampleCount++;
-    eyeState.push(hasOffset ? { ...s, eyeMm: add(s.eyeMm, eyeOffsetMm) } : s);
+    eyeState.push({ ...s, eyeMm: add(s.eyeMm, eyeOffsetMm) });
   };
   let trackerStatus = 'starting';
   tracker.onSample(onSample);
@@ -223,35 +225,33 @@ async function main(): Promise<void> {
         eyeState.setConfig(config.tracking);
         break;
       case 'o': {
-        // Capture the current eye as the rest position (fallback when the face is lost).
+        // Zero the lateral view: make the current tracked x/y read as 0 by adjusting the offset.
         const cur = eyeState.raw?.position;
         if (!cur) {
-          warn('[rest] no tracked eye to capture');
+          warn('[offset] no tracked eye to capture');
           break;
         }
-        restEyeMm = v3(cur.x, cur.y, cur.z);
-        eyeState.setDefaultEye(restEyeMm);
-        const rounded = [restEyeMm.x, restEyeMm.y, restEyeMm.z].map((n) => Math.round(n));
+        eyeOffsetMm = v3(eyeOffsetMm.x - cur.x, eyeOffsetMm.y - cur.y, eyeOffsetMm.z);
+        const rounded = [eyeOffsetMm.x, eyeOffsetMm.y, eyeOffsetMm.z].map((n) => Math.round(n));
         try {
-          localStorage.setItem(REST_KEY, JSON.stringify(rounded));
+          localStorage.setItem(OFFSET_KEY, JSON.stringify(rounded));
         } catch {
           /* ignore */
         }
         log(
           'info',
-          `[rest] rest eye set to ${rounded.join(', ')} mm (loss fallback). Paste into config: rest_eye_mm: [${rounded.join(', ')}]`,
+          `[offset] eye offset set to ${rounded.join(', ')} mm; current position now reads x 0, y 0. Paste into config: eye_offset_mm: [${rounded.join(', ')}]`,
         );
         break;
       }
       case 'O':
         try {
-          localStorage.removeItem(REST_KEY);
+          localStorage.removeItem(OFFSET_KEY);
         } catch {
           /* ignore */
         }
-        restEyeMm = v3(...config.viewer.rest_eye_mm);
-        eyeState.setDefaultEye(restEyeMm);
-        log('info', '[rest] cleared stored rest eye; using the config value');
+        eyeOffsetMm = v3(...config.viewer.eye_offset_mm);
+        log('info', '[offset] cleared stored eye offset; using the config value');
         break;
       case 'c': {
         if (!mpTracker) break;

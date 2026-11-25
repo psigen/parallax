@@ -21,19 +21,21 @@ The page asks for the webcam and starts tracking. Sit about half a metre from th
 - Press `f` for fullscreen: the physical-size math is exact there. Press `c` once to calibrate
   the focal length at a measured distance (see [docs/calibration.md](docs/calibration.md)).
 
-| Key | Action                                                              |
-| --- | ------------------------------------------------------------------- |
-| `h` | latency HUD                                                         |
-| `d` | camera debug view (mirrored feed, iris landmarks, depth)            |
-| `g` | live tuning panel (filter, prediction)                              |
-| `m` | 100 mm ruler square to verify the physical mapping                  |
-| `f` | fullscreen                                                          |
-| `c` | calibrate focal length at a prompted distance                       |
-| `x` | clear the stored calibration                                        |
-| `o` | re-zero the vertical view: offset tracking so the current y reads 0 |
-| `O` | revert the eye offset to the default (negated camera position)      |
-| `p` | copy a diagnostic snapshot to the clipboard                         |
-| `r` | reset the filter                                                    |
+| Key | Action                                                                       |
+| --- | ---------------------------------------------------------------------------- |
+| `h` | latency HUD                                                                  |
+| `d` | camera debug view (mirrored feed, iris landmarks, depth)                     |
+| `t` | tracking scope: raw samples vs rendered eye over 3 s (lag, jitter, dropouts) |
+| `w` | glass frame: lines drawn in the screen plane; must never move on screen      |
+| `g` | live tuning panel (filter, prediction)                                       |
+| `m` | 100 mm ruler square to verify the physical mapping                           |
+| `f` | fullscreen                                                                   |
+| `c` | calibrate focal length at a prompted distance                                |
+| `x` | clear the stored calibration                                                 |
+| `o` | re-zero the vertical view: offset tracking so the current y reads 0          |
+| `O` | revert the eye offset to the default (negated camera position)               |
+| `p` | copy a diagnostic snapshot to the clipboard                                  |
+| `r` | reset the filter                                                             |
 
 URL parameters: `?tracker=mouse` (drive the eye with the mouse, wheel for distance),
 `?tracker=static&eye=250,0,550` (fixed eye), `?camera=mx-brio` (a camera id from the config),

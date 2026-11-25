@@ -11,6 +11,8 @@ export interface HudStats {
   captureToDisplayMs: number;
   predictionLeadMs: number;
   viewportMm: { w: number; h: number };
+  /** Std dev of raw x over the last second, mm. */
+  noiseMm: number;
   /** Raw browser metrics behind the viewport mapping, for diagnosing placement. */
   browser: string;
   camera: string;
@@ -50,14 +52,14 @@ export class Hud {
     const lines = [
       `tracker   ${s.trackerName}${s.tracking ? '' : '  (no face: easing to default)'}`,
       `eye mm    x${f(s.eyeMm.x)} y${f(s.eyeMm.y)} z${f(s.eyeMm.z)}`,
-      `render    ${f(s.renderFps, 1)} fps     samples ${f(s.sampleHz, 1)} Hz`,
+      `render    ${f(s.renderFps, 1)} fps     samples ${f(s.sampleHz, 1)} Hz     jitter σ ${f(s.noiseMm, 2)} mm`,
       `latency   capture→main ${f(s.trackerLatencyMs, 1)} ms   inference ${f(s.inferenceMs, 1)} ms`,
       `          capture→display ${f(s.captureToDisplayMs, 1)} ms   predicted lead ${f(s.predictionLeadMs, 1)} ms`,
       `viewport  ${f(s.viewportMm.w, 1)} x ${f(s.viewportMm.h, 1)} mm`,
       `browser   ${s.browser}`,
       `camera    ${s.camera}`,
       ...s.warnings.map((w) => `log       ${w}`),
-      `keys      h hud  d debug  g tuning  m ruler  f fullscreen  c calibrate  x clear-cal  o zero-y  O clear-offset  p snapshot  r reset`,
+      `keys      h hud  d debug  t scope  w glass  g tuning  m ruler  f fullscreen  c calibrate  x clear-cal  o zero-y  O clear-offset  p snapshot  r reset`,
     ];
     this.el.textContent = lines.join('\n');
   }

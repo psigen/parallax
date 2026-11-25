@@ -61,6 +61,40 @@ export const trackingSchema = z.object({
   loss_timeout_ms: z.number().nonnegative(),
 });
 
+export const lightingSchema = z.object({
+  enabled: z.boolean().default(true),
+  scene_lights_scale: z.number().nonnegative().default(1),
+  environment: z
+    .object({
+      enabled: z.boolean().default(true),
+      intensity: z.number().nonnegative().default(1),
+      resolution_px: z.number().int().min(32).max(2048).default(256),
+      update_hz: z.number().positive().default(10),
+      fade_deg: z.number().nonnegative().default(20),
+    })
+    .prefault({}),
+  key_lights: z
+    .object({
+      enabled: z.boolean().default(true),
+      analysis_width_px: z.number().int().min(16).max(512).default(96),
+      threshold: z.number().min(0).max(1).default(0.8),
+      min_area_px: z.number().int().positive().default(3),
+      max_lights: z.number().int().min(0).max(8).default(4),
+      merge_radius_px: z.number().nonnegative().default(3),
+      brightness: z
+        .object({
+          gain: z.number().nonnegative().default(40),
+          saturation_boost: z.number().positive().default(2),
+        })
+        .prefault({}),
+      smoothing_hz: z.number().positive().default(3),
+      hold_frames: z.number().int().nonnegative().default(3),
+      shadows: z.boolean().default(true),
+      shadow_map_px: z.number().int().min(128).max(4096).default(1024),
+    })
+    .prefault({}),
+});
+
 export const configSchema = z
   .object({
     screen: screenSchema,
@@ -78,6 +112,7 @@ export const configSchema = z
       near_mm: z.number().positive(),
       far_mm: z.number().positive(),
     }),
+    lighting: lightingSchema.prefault({}),
   })
   .refine((c) => c.cameras.some((cam) => cam.id === c.default_camera), {
     message: 'default_camera must name one of the entries in cameras',
@@ -94,3 +129,4 @@ export type CameraConfig = Config['cameras'][number];
 export type Intrinsics = CameraConfig['intrinsics'];
 export type Extrinsics = CameraConfig['extrinsics'];
 export type TrackingConfig = Config['tracking'];
+export type LightingConfig = Config['lighting'];

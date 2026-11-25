@@ -35,3 +35,18 @@ describe('config/default.yaml', () => {
     expect(() => findCamera(cfg, 'ghost')).toThrow(/ghost.*mbp14-builtin/);
   });
 });
+
+describe('lighting config', () => {
+  it('has the documented defaults', () => {
+    const cfg = parseConfig(defaultYaml);
+    expect(cfg.lighting.enabled).toBe(true);
+    expect(cfg.lighting.environment.update_hz).toBe(10);
+    expect(cfg.lighting.key_lights.max_lights).toBe(4);
+    expect(cfg.lighting.key_lights.brightness.gain).toBe(40);
+  });
+
+  it('fills defaults when the section is absent', () => {
+    const cfg = parseConfig(defaultYaml.slice(0, defaultYaml.indexOf('\nlighting:')));
+    expect(cfg.lighting.key_lights.shadows).toBe(true);
+  });
+});

@@ -99,3 +99,34 @@ rendering:
   scene_url: /scenes/room.glb
   near_mm: 10
   far_mm: 20000
+
+lighting:
+  # Use the webcam image as the light entering through the window (docs/lighting.md).
+  enabled: true
+  # Multiplier on lights authored in the glTF when camera lighting is on.
+  scene_lights_scale: 1.0
+  environment:
+    # Camera frame projected onto the +z hemisphere of an equirectangular map, prefiltered for
+    # diffuse + specular image-based lighting.
+    enabled: true
+    intensity: 1.0
+    resolution_px: 256 # equirect width; height is half
+    update_hz: 10
+    # Directions the camera cannot see fade from the frame's edge colour to its mean over this angle.
+    fade_deg: 20
+  key_lights:
+    # Bright peaks in the camera image become shadow-casting directional lights.
+    enabled: true
+    analysis_width_px: 96 # frame is downsampled to this width before peak detection
+    threshold: 0.8 # linear luminance (0..1) a pixel must exceed to belong to a source
+    min_area_px: 3
+    max_lights: 4
+    merge_radius_px: 3 # blobs with centroids closer than this (analysis px) merge
+    brightness:
+      # intensity = gain * mean_linear_luminance * (saturated ? saturation_boost : 1) * solid_angle_sr
+      gain: 40
+      saturation_boost: 2.0
+    smoothing_hz: 3 # exponential smoothing of direction and intensity
+    hold_frames: 3 # frames a source must persist to appear, and survive after vanishing
+    shadows: true
+    shadow_map_px: 1024

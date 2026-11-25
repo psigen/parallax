@@ -8,7 +8,7 @@ import {
   scaleRect,
   viewportRectMm,
 } from './math/viewportRect';
-import { add, scale, v3 } from './math/vec';
+import { add, scale, v3, type Vec3 } from './math/vec';
 import { App } from './render/app';
 import { buildReferenceScene } from './render/referenceScene';
 import { loadScene } from './render/sceneLoader';
@@ -26,20 +26,15 @@ import { TuningPanel } from './ui/tuning';
 const WASM_PATH = '/mediapipe/wasm';
 const MODEL_PATH = '/models/face_landmarker.task';
 const focalKey = (cameraId: string) => `parallax.focal_px.${cameraId}`;
-const OFFSET_KEY = 'parallax.eye_offset_mm';
+const offsetKey = (cameraId: string) => `parallax.eye_offset_y_mm.${cameraId}`;
 
-function readOffsetOverride(): [number, number, number] | undefined {
+function readOffsetYOverride(cameraId: string): number | undefined {
   try {
-    const v = localStorage.getItem(OFFSET_KEY);
-    if (!v) return undefined;
-    const arr: unknown = JSON.parse(v);
-    if (Array.isArray(arr) && arr.length === 3 && arr.every((n) => typeof n === 'number')) {
-      return arr as [number, number, number];
-    }
+    const v = localStorage.getItem(offsetKey(cameraId));
+    return v ? Number(v) : undefined;
   } catch {
-    /* ignore */
+    return undefined;
   }
-  return undefined;
 }
 
 function readFocalOverride(cameraId: string): number | undefined {
@@ -87,16 +82,21 @@ async function main(): Promise<void> {
 
   const [dx, dy, dz] = config.viewer.rest_eye_mm;
   const eyeState = new EyeState(config.tracking, v3(dx, dy, dz));
-  // Constant added to every tracked eye position. `o` sets it so the current x/y read as zero.
-  const offsetOverride = readOffsetOverride();
-  const [offX, offY, offZ] = offsetOverride ?? config.viewer.eye_offset_mm;
-  let eyeOffsetMm = v3(offX, offY, offZ);
-  if (offX !== 0 || offY !== 0 || offZ !== 0) {
-    log(
-      'info',
-      `[viewer] eye offset ${[offX, offY, offZ].join(', ')} mm${offsetOverride ? ' (stored)' : ''}`,
-    );
-  }
+  // Constant added to every tracked eye position. Default: the negated camera position, so an
+  // eye centred in the camera image reads x 0, y 0. `o` re-zeroes only the Y component.
+  const defaultOffset = (): Vec3 => {
+    if (config.viewer.eye_offset_mm) return v3(...config.viewer.eye_offset_mm);
+    if (!mpTracker) return v3(0, 0, 0);
+    const [px, py, pz] = mpTracker.model.extrinsics.position_mm;
+    return v3(-px, -py, -pz);
+  };
+  let eyeOffsetMm = defaultOffset();
+  const storedY = readOffsetYOverride(cameraId);
+  if (storedY !== undefined) eyeOffsetMm = v3(eyeOffsetMm.x, storedY, eyeOffsetMm.z);
+  log(
+    'info',
+    `[viewer] eye offset ${[eyeOffsetMm.x, eyeOffsetMm.y, eyeOffsetMm.z].map((n) => n.toFixed(1)).join(', ')} mm${storedY !== undefined ? ' (y stored)' : ''}`,
+  );
   const tuning = new TuningPanel(config.tracking, (t) => {
     eyeState.setConfig(t);
     if (mpTracker) {
@@ -225,33 +225,33 @@ async function main(): Promise<void> {
         eyeState.setConfig(config.tracking);
         break;
       case 'o': {
-        // Zero the lateral view: make the current tracked x/y read as 0 by adjusting the offset.
+        // Re-zero the vertical view: make the current tracked y read as 0. x and z are untouched.
         const cur = eyeState.raw?.position;
         if (!cur) {
           warn('[offset] no tracked eye to capture');
           break;
         }
-        eyeOffsetMm = v3(eyeOffsetMm.x - cur.x, eyeOffsetMm.y - cur.y, eyeOffsetMm.z);
+        eyeOffsetMm = v3(eyeOffsetMm.x, eyeOffsetMm.y - cur.y, eyeOffsetMm.z);
         const rounded = [eyeOffsetMm.x, eyeOffsetMm.y, eyeOffsetMm.z].map((n) => Math.round(n));
         try {
-          localStorage.setItem(OFFSET_KEY, JSON.stringify(rounded));
+          localStorage.setItem(offsetKey(cameraId), String(rounded[1]));
         } catch {
           /* ignore */
         }
         log(
           'info',
-          `[offset] eye offset set to ${rounded.join(', ')} mm; current position now reads x 0, y 0. Paste into config: eye_offset_mm: [${rounded.join(', ')}]`,
+          `[offset] eye offset y set so the current position reads y 0. Paste into config: eye_offset_mm: [${rounded.join(', ')}]`,
         );
         break;
       }
       case 'O':
         try {
-          localStorage.removeItem(OFFSET_KEY);
+          localStorage.removeItem(offsetKey(cameraId));
         } catch {
           /* ignore */
         }
-        eyeOffsetMm = v3(...config.viewer.eye_offset_mm);
-        log('info', '[offset] cleared stored eye offset; using the config value');
+        eyeOffsetMm = defaultOffset();
+        log('info', '[offset] cleared stored eye offset y; using the default');
         break;
       case 'c': {
         if (!mpTracker) break;

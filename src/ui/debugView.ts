@@ -1,3 +1,4 @@
+import type { DetectedLight } from '../lighting/cameraLighting';
 import type { TrackerDebugFrame } from '../tracking/mediapipeTracker';
 import { LEFT_IRIS_CENTRE, RIGHT_IRIS_CENTRE, landmarkAt } from '../tracking/protocol';
 
@@ -6,6 +7,9 @@ export class DebugView {
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
   private visible = false;
+  /** Detected light sources to overlay (set by the lighting orchestrator each update). */
+  sources: DetectedLight[] = [];
+  analysisWidth = 1;
 
   constructor(parent: HTMLElement, width = 320) {
     this.canvas = document.createElement('canvas');
@@ -57,6 +61,19 @@ export class DebugView {
         ctx.arc(p.x * w, p.y * h, 4, 0, Math.PI * 2);
         ctx.stroke();
       }
+    }
+    // Light sources: circle radius from the blob area, label with the estimated intensity.
+    for (const d of this.sources) {
+      const px = w / this.analysisWidth;
+      const r = Math.max(3, Math.sqrt(d.source.areaPx / Math.PI) * px);
+      ctx.strokeStyle = d.source.saturated ? '#ff0' : '#fa0';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(d.source.u * w, d.source.v * h, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = '#fd8';
+      ctx.font = '10px ui-monospace, monospace';
+      ctx.fillText(d.intensity.toFixed(2), d.source.u * w + r + 2, d.source.v * h + 3);
     }
     ctx.restore();
     ctx.fillStyle = f.found ? '#9f9' : '#f99';

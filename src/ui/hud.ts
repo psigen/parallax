@@ -16,6 +16,7 @@ export interface HudStats {
   /** Raw browser metrics behind the viewport mapping, for diagnosing placement. */
   browser: string;
   camera: string;
+  lighting: string;
   warnings: string[];
 }
 
@@ -58,8 +59,9 @@ export class Hud {
       `viewport  ${f(s.viewportMm.w, 1)} x ${f(s.viewportMm.h, 1)} mm`,
       `browser   ${s.browser}`,
       `camera    ${s.camera}`,
+      `lighting  ${s.lighting}`,
       ...s.warnings.map((w) => `log       ${w}`),
-      `keys      h hud  d debug  t scope  w glass  g tuning  m ruler  f fullscreen  c calibrate  x clear-cal  o zero-y  O clear-offset  p snapshot  r reset`,
+      `keys      h hud  d debug  t scope  w glass  i lighting  g tuning  m ruler  f fullscreen  c calibrate  x clear-cal  o zero-y  O clear-offset  p snapshot  r reset`,
     ];
     this.el.textContent = lines.join('\n');
   }

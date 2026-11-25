@@ -1,4 +1,4 @@
-import { AmbientLight, Box3, DirectionalLight, Group, Light, Vector3 } from 'three';
+import { AmbientLight, Box3, DirectionalLight, Group, Light, Mesh, Vector3 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { findWindowCamera, hasNonUnitScale, windowRootMatrix } from './sceneRoot';
 
@@ -9,14 +9,23 @@ export interface SceneWarning {
 
 export interface LoadedScene {
   root: Group;
+  /** Bounds in the screen frame (metres), after re-rooting. */
+  bounds: Box3;
   warnings: SceneWarning[];
+}
+
+export interface LoadSceneOptions {
+  /** Multiplier applied to lights authored in the glTF. */
+  lightsScale?: number;
+  /** Mark every mesh to cast and receive shadows. */
+  shadows?: boolean;
 }
 
 /**
  * Load a glTF and express it in the screen frame. See docs/scene-authoring.md for the
  * invariants. The returned group is ready to add to the Three scene.
  */
-export async function loadScene(url: string): Promise<LoadedScene> {
+export async function loadScene(url: string, opts: LoadSceneOptions = {}): Promise<LoadedScene> {
   const gltf = await new GLTFLoader().loadAsync(url);
   const warnings: SceneWarning[] = [];
   const root = new Group();
@@ -62,7 +71,14 @@ export async function loadScene(url: string): Promise<LoadedScene> {
 
   let hasLights = false;
   root.traverse((o) => {
-    if (o instanceof Light) hasLights = true;
+    if (o instanceof Light) {
+      hasLights = true;
+      o.intensity *= opts.lightsScale ?? 1;
+    }
+    if (opts.shadows && o instanceof Mesh) {
+      o.castShadow = true;
+      o.receiveShadow = true;
+    }
   });
   if (!hasLights) {
     warnings.push({
@@ -76,5 +92,5 @@ export async function loadScene(url: string): Promise<LoadedScene> {
   // A faint ambient keeps shadowed walls readable without washing out the lights.
   root.add(new AmbientLight(0xffffff, 0.25));
 
-  return { root, warnings };
+  return { root, bounds, warnings };
 }

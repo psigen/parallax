@@ -1,11 +1,15 @@
 import GUI from 'lil-gui';
-import type { TrackingConfig } from '../config/schema';
+import type { LightingConfig, TrackingConfig } from '../config/schema';
 
 /** Live tuning of filter and prediction parameters (key `g`). Changes are not persisted. */
 export class TuningPanel {
   private readonly gui: GUI;
 
-  constructor(tracking: TrackingConfig, onChange: (t: TrackingConfig) => void) {
+  constructor(
+    tracking: TrackingConfig,
+    lighting: LightingConfig,
+    onChange: (t: TrackingConfig) => void,
+  ) {
     this.gui = new GUI({ title: 'tracking', width: 260 });
     const f = this.gui.addFolder('One Euro filter');
     f.add(tracking.filter, 'min_cutoff_hz', 0.1, 10, 0.1).name('min cutoff Hz');
@@ -20,6 +24,14 @@ export class TuningPanel {
     e.add(tracking, 'eye', ['cyclopean', 'left', 'right']).name('render for');
     e.add(tracking, 'yaw_correction').name('yaw correction');
     e.add(tracking, 'parallax_gain', 0.25, 2, 0.05).name('parallax gain');
+    const l = this.gui.addFolder('camera lighting (live)');
+    l.add(lighting.environment, 'intensity', 0, 3, 0.05).name('environment');
+    l.add(lighting.environment, 'update_hz', 1, 30, 1).name('update Hz');
+    l.add(lighting.key_lights, 'threshold', 0.3, 1, 0.01).name('peak threshold');
+    l.add(lighting.key_lights, 'min_area_px', 1, 40, 1).name('min area px');
+    l.add(lighting.key_lights.brightness, 'gain', 0, 1000, 5).name('key gain');
+    l.add(lighting.key_lights.brightness, 'saturation_boost', 1, 6, 0.1).name('saturation boost');
+    l.add(lighting.key_lights, 'smoothing_hz', 0.5, 10, 0.5).name('smoothing Hz');
     this.gui.onChange(() => onChange(tracking));
     this.gui.hide();
   }

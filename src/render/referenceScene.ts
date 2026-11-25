@@ -17,7 +17,7 @@ import {
  * on screen; moving the head fans them out by depth. Plus a ground grid and a sphere 0.1 m in
  * front of the glass. Select with `?scene=reference`.
  */
-export function buildReferenceScene(restDistanceM = 0.55): Group {
+export function buildReferenceScene(restDistanceM = 0.55, shadows = false): Group {
   const g = new Group();
   g.name = 'reference';
   const depths: [number, number][] = [
@@ -54,5 +54,13 @@ export function buildReferenceScene(restDistanceM = 0.55): Group {
   const sun = new DirectionalLight(0xffffff, 2.5);
   sun.position.set(0.3, 1, 0.8);
   g.add(sun, sun.target, new AmbientLight(0xffffff, 0.6));
+  if (shadows) {
+    g.traverse((o) => {
+      if (o instanceof Mesh) {
+        o.castShadow = true;
+        o.receiveShadow = true;
+      }
+    });
+  }
   return g;
 }

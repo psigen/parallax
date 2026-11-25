@@ -52,7 +52,7 @@ describe('mapSource', () => {
 });
 
 describe('LinearSolidAngleModel', () => {
-  const model = new LinearSolidAngleModel({ gain: 40, saturationBoost: 2 });
+  const model = new LinearSolidAngleModel(() => ({ gain: 40, saturationBoost: 2 }));
 
   it('is linear in luminance and solid angle', () => {
     const a = model.intensity({ ...src(0.5, 0.5), meanLum: 0.5 }, 0.01);

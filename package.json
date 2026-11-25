@@ -16,7 +16,8 @@
     "test:watch": "vitest",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run test",
     "build:room": "tsx scripts/build-room.ts",
-    "fetch:models": "sh scripts/fetch-models.sh"
+    "fetch:models": "sh scripts/fetch-models.sh",
+    "smoke": "tsx scripts/smoke.ts"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^1.2.3",

@@ -40,7 +40,7 @@ The page asks for the webcam and starts tracking. Sit about half a metre from th
 
 URL parameters: `?tracker=mouse` (drive the eye with the mouse, wheel for distance),
 `?tracker=static&eye=250,0,550` (fixed eye), `?camera=mx-brio` (a camera id from the config),
-`?viewport=full` (assume the viewport is the whole display), `?scene=reference` (depth markers
+`?viewport=full` (assume the viewport is the whole display), `?lighting=off|environment|full` (camera lighting mode at start), `?scene=reference` (depth markers
 out to 30 m for checking parallax against real objects) or `?scene=<url>` (another glTF).
 
 All physical parameters (display size, camera intrinsics and position, interpupillary distance,

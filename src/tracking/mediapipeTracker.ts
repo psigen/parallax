@@ -10,6 +10,8 @@ import { CameraSource, type CameraSettings } from './cameraSource';
 import {
   faceTranslationCm,
   irisCentres,
+  type LightingAnalysisParams,
+  type LightingAnalysisResult,
   type WorkerRequest,
   type WorkerResponse,
 } from './protocol';
@@ -31,6 +33,13 @@ export interface TrackerDebugFrame {
 }
 
 export type TrackerDebugListener = (frame: TrackerDebugFrame) => void;
+export type LightingListener = (result: LightingAnalysisResult) => void;
+
+/** What the camera-lighting orchestrator needs from a frame source. */
+export interface LightingAnalysisSource {
+  setLightingAnalysis(params: LightingAnalysisParams | null): void;
+  onLighting(listener: LightingListener): void;
+}
 
 export interface MediapipeTrackerOptions {
   camera: CameraConfig;
@@ -49,7 +58,7 @@ export interface MediapipeTrackerOptions {
  * Webcam → worker (MediaPipe FaceLandmarker) → iris landmarks → eye position. Frames arriving
  * while one is in flight are dropped, not queued: a stale frame is worth nothing for latency.
  */
-export class MediapipeTracker implements Tracker {
+export class MediapipeTracker implements Tracker, LightingAnalysisSource {
   readonly name: string;
   readonly model: CameraModel;
   private readonly emitter = new SampleEmitter();
@@ -58,6 +67,8 @@ export class MediapipeTracker implements Tracker {
   private inFlight: { id: number; captureMs: number; sentMs: number } | undefined;
   private nextId = 1;
   private debugListener: TrackerDebugListener | undefined;
+  private lightingListener: LightingListener | undefined;
+  private lightingParams: LightingAnalysisParams | null = null;
   private lastObservation: IrisObservation | undefined;
   settings: CameraSettings | undefined;
   delegate: 'GPU' | 'CPU' | undefined;
@@ -113,6 +124,7 @@ export class MediapipeTracker implements Tracker {
 
     this.opts.onLog?.('[tracker] opening camera');
     const [settings] = await Promise.all([this.source.start(this.opts.camera), ready]);
+    if (this.lightingParams) this.postLighting();
     this.settings = settings;
     const refAspect = this.model.intrinsics.width_px / this.model.intrinsics.height_px;
     if (Math.abs(settings.width / settings.height - refAspect) > 0.02) {
@@ -153,6 +165,21 @@ export class MediapipeTracker implements Tracker {
     this.debugListener = listener;
   }
 
+  /** Ask the worker to detect bright sources on tracked frames (null stops it). */
+  setLightingAnalysis(params: LightingAnalysisParams | null): void {
+    this.lightingParams = params;
+    if (this.delegate) this.postLighting();
+  }
+
+  onLighting(listener: LightingListener): void {
+    this.lightingListener = listener;
+  }
+
+  private postLighting(): void {
+    const req: WorkerRequest = { type: 'lighting', params: this.lightingParams };
+    this.worker?.postMessage(req);
+  }
+
   /**
    * Set the focal length so that the most recent observation corresponds to the given
    * eye-to-screen distance. Returns the new focal length (px) or undefined if no face is visible.
@@ -185,6 +212,7 @@ export class MediapipeTracker implements Tracker {
     this.inFlight = undefined;
     const now = performance.now();
     const captureMs = flight?.captureMs ?? msg.timestampMs;
+    if (msg.lighting) this.lightingListener?.({ ...msg.lighting, tCaptureMs: captureMs });
 
     if (!msg.found) {
       this.lastObservation = undefined;

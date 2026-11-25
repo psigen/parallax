@@ -103,6 +103,7 @@ async function main(): Promise<void> {
       mpTracker.yawCorrection = t.yaw_correction;
       mpTracker.eyeSelect = t.eye;
     }
+    lighting?.syncParams();
   });
   // ?diag=1 logs the first few tracker results in full (matrix included) for offline checking.
   let diagLeft = params.get('diag') ? 5 : 0;
@@ -208,8 +209,13 @@ async function main(): Promise<void> {
           mpTracker.model,
           config.lighting,
           sceneBounds,
+          mpTracker,
         );
-        debugView.analysisWidth = lighting.analysisWidth;
+        // ?lighting=off|environment|full overrides the configured start mode.
+        const requested = params.get('lighting');
+        if (requested === 'off' || requested === 'environment' || requested === 'full') {
+          lighting.setMode(requested);
+        }
         log('info', `[lighting] camera lighting ${lighting.mode}`);
       }
     } catch (err) {
@@ -396,6 +402,7 @@ async function main(): Promise<void> {
     if (lighting) {
       lighting.tick(tFrameMs);
       debugView.sources = lighting.mode === 'full' ? lighting.lastDetected : [];
+      debugView.analysisWidth = lighting.analysisWidth;
     }
     app.render(scale(eyeRenderMm, 1 / 1000), scaleRect(rectMm, 1 / 1000));
     scope.pushRendered(tDisplayMs, eyeRenderMm);

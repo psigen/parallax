@@ -26,3 +26,8 @@ refactors are not recorded.
   everything behind the glass (checkerboards lean), which breaks the expectation that the screen
   is a flat plate and the scene is axis-aligned with it. Rejected 2025-11-25; the sanctioned
   alternative is a constant `viewer.eye_offset_mm`.
+- **Headless Chrome with SwiftShader cannot validate the lighting pipeline end to end.** The
+  PMREM environment update takes seconds in software GL and starves the camera frame pump, so
+  the tracker reports zero samples and the worker-side analysis never runs; it looked like a
+  worker bug. With `environment.enabled: false` the same build analyses every update. Use
+  `npm run smoke` for boot/exception checks only; judge lighting on real hardware.

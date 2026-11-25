@@ -42,7 +42,7 @@ describe('lighting config', () => {
     expect(cfg.lighting.enabled).toBe(true);
     expect(cfg.lighting.environment.update_hz).toBe(10);
     expect(cfg.lighting.key_lights.max_lights).toBe(4);
-    expect(cfg.lighting.key_lights.brightness.gain).toBe(40);
+    expect(cfg.lighting.key_lights.brightness.gain).toBe(150);
   });
 
   it('fills defaults when the section is absent', () => {

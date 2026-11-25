@@ -1,4 +1,11 @@
-import { ACESFilmicToneMapping, Color, Scene, WebGLRenderer, type Group } from 'three';
+import {
+  ACESFilmicToneMapping,
+  Color,
+  Scene,
+  VSMShadowMap,
+  WebGLRenderer,
+  type Group,
+} from 'three';
 import type { ScreenRect } from '../math/offAxisProjection';
 import type { Vec3 } from '../math/vec';
 import { GlassFrame } from './glassFrame';
@@ -22,6 +29,11 @@ export class App {
     this.camera = new OffAxisCamera(nearM, farM);
     this.scene.add(this.glassFrame);
     this.resize();
+  }
+
+  enableShadows(): void {
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = VSMShadowMap;
   }
 
   /** The scene is always axis-aligned with the display: the screen is a flat plate at z = 0. */

@@ -83,7 +83,7 @@ export const lightingSchema = z.object({
       merge_radius_px: z.number().nonnegative().default(3),
       brightness: z
         .object({
-          gain: z.number().nonnegative().default(40),
+          gain: z.number().nonnegative().default(150),
           saturation_boost: z.number().positive().default(2),
         })
         .prefault({}),

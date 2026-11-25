@@ -21,10 +21,12 @@ export interface LinearSolidAngleParams {
  * A small bright lamp and a large dim panel with the same flux give the same intensity.
  */
 export class LinearSolidAngleModel implements BrightnessModel {
-  constructor(private readonly p: LinearSolidAngleParams) {}
+  /** `params` is read on every call so it can be tuned live. */
+  constructor(private readonly params: () => LinearSolidAngleParams) {}
 
   intensity(source: LightSource, solidAngleSr: number): number {
-    const radiance = this.p.gain * source.meanLum * (source.saturated ? this.p.saturationBoost : 1);
+    const p = this.params();
+    const radiance = p.gain * source.meanLum * (source.saturated ? p.saturationBoost : 1);
     return Math.max(0, radiance * solidAngleSr);
   }
 }

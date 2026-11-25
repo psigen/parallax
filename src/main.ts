@@ -9,9 +9,11 @@ import {
   viewportRectMm,
 } from './math/viewportRect';
 import { add, scale, v3, type Vec3 } from './math/vec';
+import { CameraLighting } from './lighting/cameraLighting';
 import { App } from './render/app';
 import { buildReferenceScene } from './render/referenceScene';
 import { loadScene } from './render/sceneLoader';
+import { Box3 } from 'three';
 import { EyeState } from './tracking/eyeState';
 import { MediapipeTracker } from './tracking/mediapipeTracker';
 import { MouseTracker } from './tracking/mouseTracker';
@@ -72,19 +74,30 @@ async function main(): Promise<void> {
 
   // ?scene=reference (depth markers to 30 m) or ?scene=<url> overrides the configured glTF.
   const sceneParam = params.get('scene');
+  const shadows = config.lighting.enabled && config.lighting.key_lights.shadows;
+  if (shadows) app.enableShadows();
+  let sceneBounds: Box3;
   if (sceneParam === 'reference') {
-    app.setSceneRoot(buildReferenceScene());
+    const ref = buildReferenceScene(0.55, shadows);
+    app.setSceneRoot(ref);
+    sceneBounds = new Box3().setFromObject(ref);
   } else {
-    const { root, warnings: sceneWarnings } = await loadScene(
-      sceneParam ?? config.rendering.scene_url,
-    );
+    const {
+      root,
+      bounds,
+      warnings: sceneWarnings,
+    } = await loadScene(sceneParam ?? config.rendering.scene_url, {
+      lightsScale: config.lighting.enabled ? config.lighting.scene_lights_scale : 1,
+      shadows,
+    });
     for (const w of sceneWarnings) warn(`[scene] ${w.code}: ${w.message}`);
     app.setSceneRoot(root);
+    sceneBounds = bounds;
   }
 
   const [dx, dy, dz] = config.viewer.rest_eye_mm;
   const eyeState = new EyeState(config.tracking, v3(dx, dy, dz));
-  const tuning = new TuningPanel(config.tracking, (t) => {
+  const tuning = new TuningPanel(config.tracking, config.lighting, (t) => {
     eyeState.setConfig(t);
     if (mpTracker) {
       mpTracker.yawCorrection = t.yaw_correction;
@@ -172,6 +185,7 @@ async function main(): Promise<void> {
     scope.pushRaw(s.tCaptureMs, eyeMm);
   };
   let trackerStatus = 'starting';
+  let lighting: CameraLighting | undefined;
   tracker.onSample(onSample);
   const startTracker = async (): Promise<void> => {
     try {
@@ -183,6 +197,18 @@ async function main(): Promise<void> {
           'info',
           `[tracker] ${s.label}: ${s.width}x${s.height} @ ${s.frameRate} fps, delegate ${mpTracker.delegate ?? '?'}`,
         );
+      }
+      if (mpTracker && config.lighting.enabled) {
+        lighting = new CameraLighting(
+          app.renderer,
+          app.scene,
+          mpTracker.video,
+          mpTracker.model,
+          config.lighting,
+          sceneBounds,
+        );
+        debugView.analysisWidth = lighting.analysisWidth;
+        log('info', `[lighting] camera lighting ${lighting.mode}`);
       }
     } catch (err) {
       warn(
@@ -215,6 +241,10 @@ async function main(): Promise<void> {
         break;
       case 't':
         scope.toggle();
+        break;
+      case 'i':
+        if (lighting) log('info', `[lighting] mode ${lighting.cycleMode()}`);
+        else warn('[lighting] needs the camera tracker');
         break;
       case 'w':
         app.glassFrame.visible = !app.glassFrame.visible;
@@ -313,6 +343,15 @@ async function main(): Promise<void> {
     return `${s ? `${s.label} ${s.width}x${s.height}@${s.frameRate}` : 'starting'}  fx ${k.fx_px.toFixed(0)}px @${k.width_px}  ipd ${config.viewer.ipd_mm}  eye ${mpTracker.eyeSelect}  yawcorr ${mpTracker.yawCorrection ? 'on' : 'off'}  dropped ${mpTracker.droppedFrames}`;
   };
 
+  const lightingLine = (): string => {
+    if (!lighting) return config.lighting.enabled ? 'waiting for camera' : 'disabled';
+    const s = lighting.stats;
+    const strongest = s.strongest
+      ? `  strongest dir ${[s.strongest.direction.x, s.strongest.direction.y, s.strongest.direction.z].map((n) => n.toFixed(2)).join(',')} I ${s.strongest.intensity.toFixed(2)}`
+      : '';
+    return `${s.mode}  env ${s.envMs.toFixed(1)} ms  analysis ${s.analysisMs.toFixed(1)} ms  lights ${s.lights}${strongest}`;
+  };
+
   const snapshot = (): string => {
     const d = mpTracker?.lastDebug;
     const debugLine = d
@@ -352,6 +391,10 @@ async function main(): Promise<void> {
         ? fullScreenRectMm(config.screen)
         : viewportRectMm(readBrowserMetrics(window), config.screen);
 
+    if (lighting) {
+      lighting.tick(tFrameMs);
+      debugView.sources = lighting.mode === 'full' ? lighting.lastDetected : [];
+    }
     app.render(scale(eyeRenderMm, 1 / 1000), scaleRect(rectMm, 1 / 1000));
     scope.pushRendered(tDisplayMs, eyeRenderMm);
     scope.draw(tFrameMs);
@@ -384,6 +427,7 @@ async function main(): Promise<void> {
       noiseMm: scope.noiseMm(tFrameMs),
       browser: browserLine(),
       camera: cameraLine(),
+      lighting: lightingLine(),
       warnings: messages,
     });
     requestAnimationFrame(frame);

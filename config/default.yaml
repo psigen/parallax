@@ -124,7 +124,7 @@ lighting:
     merge_radius_px: 3 # blobs with centroids closer than this (analysis px) merge
     brightness:
       # intensity = gain * mean_linear_luminance * (saturated ? saturation_boost : 1) * solid_angle_sr
-      gain: 40
+      gain: 150
       saturation_boost: 2.0
     smoothing_hz: 3 # exponential smoothing of direction and intensity
     hold_frames: 3 # frames a source must persist to appear, and survive after vanishing

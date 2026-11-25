@@ -10,6 +10,7 @@ import {
 } from './math/viewportRect';
 import { scale, v3 } from './math/vec';
 import { App } from './render/app';
+import { buildReferenceScene } from './render/referenceScene';
 import { loadScene } from './render/sceneLoader';
 import { EyeState } from './tracking/eyeState';
 import { MediapipeTracker } from './tracking/mediapipeTracker';
@@ -72,9 +73,17 @@ async function main(): Promise<void> {
     log('warn', msg);
   };
 
-  const { root, warnings: sceneWarnings } = await loadScene(config.rendering.scene_url);
-  for (const w of sceneWarnings) warn(`[scene] ${w.code}: ${w.message}`);
-  app.setSceneRoot(root);
+  // ?scene=reference (depth markers to 30 m) or ?scene=<url> overrides the configured glTF.
+  const sceneParam = params.get('scene');
+  if (sceneParam === 'reference') {
+    app.setSceneRoot(buildReferenceScene());
+  } else {
+    const { root, warnings: sceneWarnings } = await loadScene(
+      sceneParam ?? config.rendering.scene_url,
+    );
+    for (const w of sceneWarnings) warn(`[scene] ${w.code}: ${w.message}`);
+    app.setSceneRoot(root);
+  }
 
   const restOverride = readRestOverride();
   if (restOverride) log('info', `[rest] using stored rest eye ${restOverride.join(', ')} mm`);

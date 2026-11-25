@@ -14,11 +14,27 @@ npm install
 npm run dev            # http://localhost:5173
 ```
 
-- Open `http://localhost:5173/?tracker=mouse` to drive the eye position with the mouse (no camera).
-- Press `f` for fullscreen (the physical-size math assumes the browser knows where it sits on the
-  display; fullscreen makes that exact). Press `h` for the latency HUD, `d` for the camera debug view.
+The page asks for the webcam and starts tracking. Sit about half a metre from the screen.
+
 - On macOS, turn **Center Stage off** and zoom to **1x** in the Video menu (menu-bar camera icon
   while the page uses the camera); otherwise the camera intrinsics drift at runtime.
+- Press `f` for fullscreen: the physical-size math is exact there. Press `c` once to calibrate
+  the focal length at a measured distance (see [docs/calibration.md](docs/calibration.md)).
+
+| Key | Action                                                   |
+| --- | -------------------------------------------------------- |
+| `h` | latency HUD                                              |
+| `d` | camera debug view (mirrored feed, iris landmarks, depth) |
+| `g` | live tuning panel (filter, prediction)                   |
+| `m` | 100 mm ruler square to verify the physical mapping       |
+| `f` | fullscreen                                               |
+| `c` | calibrate focal length at a prompted distance            |
+| `x` | clear the stored calibration                             |
+| `r` | reset the filter                                         |
+
+URL parameters: `?tracker=mouse` (drive the eye with the mouse, wheel for distance),
+`?tracker=static&eye=250,0,550` (fixed eye), `?camera=mx-brio` (a camera id from the config),
+`?viewport=full` (assume the viewport is the whole display).
 
 All physical parameters (display size, camera intrinsics and position, interpupillary distance,
 filter tuning) live in [`config/default.yaml`](config/default.yaml).

@@ -82,21 +82,6 @@ async function main(): Promise<void> {
 
   const [dx, dy, dz] = config.viewer.rest_eye_mm;
   const eyeState = new EyeState(config.tracking, v3(dx, dy, dz));
-  // Constant added to every tracked eye position. Default: the negated camera position, so an
-  // eye centred in the camera image reads x 0, y 0. `o` re-zeroes only the Y component.
-  const defaultOffset = (): Vec3 => {
-    if (config.viewer.eye_offset_mm) return v3(...config.viewer.eye_offset_mm);
-    if (!mpTracker) return v3(0, 0, 0);
-    const [px, py, pz] = mpTracker.model.extrinsics.position_mm;
-    return v3(-px, -py, -pz);
-  };
-  let eyeOffsetMm = defaultOffset();
-  const storedY = readOffsetYOverride(cameraId);
-  if (storedY !== undefined) eyeOffsetMm = v3(eyeOffsetMm.x, storedY, eyeOffsetMm.z);
-  log(
-    'info',
-    `[viewer] eye offset ${[eyeOffsetMm.x, eyeOffsetMm.y, eyeOffsetMm.z].map((n) => n.toFixed(1)).join(', ')} mm${storedY !== undefined ? ' (y stored)' : ''}`,
-  );
   const tuning = new TuningPanel(config.tracking, (t) => {
     eyeState.setConfig(t);
     if (mpTracker) {
@@ -150,6 +135,22 @@ async function main(): Promise<void> {
   // ?viewport=full assumes the viewport covers the whole display (exact in fullscreen, and the
   // only sane choice when the browser reports bogus screen metrics, e.g. headless).
   const viewportMode = params.get('viewport') ?? 'auto';
+
+  // Constant added to every tracked eye position. Default: the negated camera position, so an
+  // eye centred in the camera image reads x 0, y 0. `o` re-zeroes only the Y component.
+  const defaultOffset = (): Vec3 => {
+    if (config.viewer.eye_offset_mm) return v3(...config.viewer.eye_offset_mm);
+    if (!mpTracker) return v3(0, 0, 0);
+    const [px, py, pz] = mpTracker.model.extrinsics.position_mm;
+    return v3(-px, -py, -pz);
+  };
+  let eyeOffsetMm = defaultOffset();
+  const storedY = readOffsetYOverride(cameraId);
+  if (storedY !== undefined) eyeOffsetMm = v3(eyeOffsetMm.x, storedY, eyeOffsetMm.z);
+  log(
+    'info',
+    `[viewer] eye offset ${[eyeOffsetMm.x, eyeOffsetMm.y, eyeOffsetMm.z].map((n) => n.toFixed(1)).join(', ')} mm${storedY !== undefined ? ' (y stored)' : ''}`,
+  );
 
   // Rolling stats for the HUD.
   let lastSample: EyeSample | undefined;

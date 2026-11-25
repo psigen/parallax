@@ -20,13 +20,13 @@ viewer:
   ipd_mm: 63
   # Where your eyes usually are, relative to the display centre (mm). Used before tracking locks
   # on and after the face is lost. A laptop display is well below eye level, so this is typically
-  # [0, 100..250, 450..650]. Press `o` while tracking to capture your current position; the
-  # console prints the line to paste here.
+  # [0, 100..250, 450..650].
   rest_eye_mm: [0, 150, 550]
   # Added to every tracked eye position (mm). The scene is always axis-aligned with the screen
-  # (a flat plate at z = 0), so the only way to make "looking at the screen centre" look straight
-  # into the scene is to pretend the eye is lower than it is, e.g. [0, -150, 0] for eyes 150 mm
-  # above the display centre. Geometrically a lie; leave at zero for a true window.
+  # (a flat plate at z = 0), so the way to make "looking at the screen centre" look straight into
+  # the scene is to shift the tracked eye onto the axis, e.g. [0, -150, 0] for eyes 150 mm above
+  # the display centre. Press `o` while tracking to set this so your current x/y read as zero;
+  # the console prints the line to paste here. `O` clears it. Leave at zero for a true window.
   eye_offset_mm: [0, 0, 0]
 
 default_camera: mbp14-builtin

@@ -39,7 +39,7 @@ The scene is never rotated to suit the viewer. The display is a flat plate at z 
 scene's axes stay aligned with it, so a checkerboard floor is level with the desk no matter where
 the viewer sits. A laptop display sits below eye level, so a faithful window shows the room from
 slightly above; that is correct. The one sanctioned adjustment is `viewer.eye_offset_mm`, which
-shifts the _tracked eye_ (not the scene) and is zero by default; see
+shifts the _tracked eye_ (not the scene) and defaults to the negated camera position; see
 [calibration.md](calibration.md).
 
 ## The bundled room

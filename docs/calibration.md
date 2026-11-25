@@ -101,18 +101,19 @@ measure and calibrate (`c`). A factor near 2 means the camera is in its wide (0.
 ## "Looking at the screen centre looks down into the scene"
 
 Expected for a true window below eye level, and the scene is deliberately never tilted to hide
-it (the screen is a flat plate; see [scene-authoring.md](scene-authoring.md)). If you want the
-rest position to behave as if it were on the display's axis, set `viewer.eye_offset_mm` to the
-negative of your rest height, e.g. `[0, -150, 0]` for eyes 150 mm above the display centre.
-This shifts every tracked eye position by a constant and is a geometric lie by exactly that
-amount; parallax from head _motion_ stays correct. Press `o` while sitting normally: it sets
-the offset so your current x and y read as zero (stored locally; the console prints the YAML
-line). `O` clears it.
+it (the screen is a flat plate; see [scene-authoring.md](scene-authoring.md)). The sanctioned
+adjustment is `viewer.eye_offset_mm`, a constant added to every tracked eye position. It
+defaults (`null`) to the negated camera position, so an eye centred in the camera image reads
+x 0, y 0: the view is "straight in" when you are on the camera's axis. Press `o` while sitting
+normally to re-zero only the Y component at your current height (x and z are never touched;
+the value is stored per camera and the console prints the YAML line). `O` reverts to the
+default. Set `[0, 0, 0]` for a strictly correct window measured from the display centre.
+Parallax from head _motion_ is unaffected by any of this.
 
-If the view is tilted more than your eye height explains, the eye's _y_ is being misestimated:
-with your eyes level with the camera, the HUD `eye mm` y should read about +95 (the camera's
-height above the display centre). A consistent offset points at `extrinsics.position_mm`; an
-offset that grows with distance points at `extrinsics.rotation_deg` (camera pitch).
+Checking the camera extrinsic: with `[0, 0, 0]` and your eyes level with the camera, the HUD
+`eye mm` y should read about +95 (the camera's height above the display centre). A consistent
+offset points at `extrinsics.position_mm`; an offset that grows with distance points at
+`extrinsics.rotation_deg` (camera pitch).
 
 ## Viewport placement
 

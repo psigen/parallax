@@ -1,5 +1,13 @@
 /**
- * Generates public/scenes/room.glb: a "window into a room" test scene.
+ * Generates public/scenes/room.glb: a box the size of the laptop display, attached to the back
+ * of the screen, with size references at round dimensions so the rendering can be judged
+ * against a ruler.
+ *
+ * Box interior: 300 mm wide x 200 mm high x 300 mm deep (the 14-inch display is 302.4 x 196.4),
+ * 50 mm checkerboard tiles (6 x 4 on the back wall, 6 deep). A 20 mm frame lies in the glass
+ * plane around the opening so the 1-2 mm mismatch with the display never shows as a gap.
+ * References: 100 mm cube, 50 mm cube, 20 mm sphere, 10 mm post 200 mm tall, a 20 mm sphere
+ * 50 mm in front of the glass.
  *
  * Authoring frame (deliberately NOT the screen frame, to exercise the `window` camera node):
  * origin on the floor, centred under the window opening, at the window plane. +y up, +z toward
@@ -14,10 +22,11 @@ import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const OPENING_W = 0.4;
-const OPENING_H = 0.28;
-const DEPTH = 0.5;
+const OPENING_W = 0.3;
+const OPENING_H = 0.2;
+const DEPTH = 0.3;
 const TILE = 0.05;
+const FRAME_W = 0.02;
 
 type V3 = [number, number, number];
 
@@ -304,15 +313,60 @@ async function build(): Promise<void> {
   addCheckerWall(room, [hw, 0, -DEPTH], [0, 0, 1], [0, 1, 0], DEPTH, OPENING_H, light, dark);
   addMeshNode(doc, scene, 'room', room, matte);
 
+  // Window frame in the glass plane (z = 0), facing the viewer, 20 mm wide around the opening.
+  const frame = emptyMesh();
+  const fo = FRAME_W;
+  const frameColor: V3 = [0.12, 0.12, 0.13];
+  addQuad(
+    frame,
+    [-hw - fo, -fo, 0],
+    [hw + fo, -fo, 0],
+    [hw + fo, 0, 0],
+    [-hw - fo, 0, 0],
+    [0, 0, 1],
+    frameColor,
+  );
+  addQuad(
+    frame,
+    [-hw - fo, OPENING_H, 0],
+    [hw + fo, OPENING_H, 0],
+    [hw + fo, OPENING_H + fo, 0],
+    [-hw - fo, OPENING_H + fo, 0],
+    [0, 0, 1],
+    frameColor,
+  );
+  addQuad(
+    frame,
+    [-hw - fo, 0, 0],
+    [-hw, 0, 0],
+    [-hw, OPENING_H, 0],
+    [-hw - fo, OPENING_H, 0],
+    [0, 0, 1],
+    frameColor,
+  );
+  addQuad(
+    frame,
+    [hw, 0, 0],
+    [hw + fo, 0, 0],
+    [hw + fo, OPENING_H, 0],
+    [hw, OPENING_H, 0],
+    [0, 0, 1],
+    frameColor,
+  );
+  addMeshNode(doc, scene, 'frame', frame, matte);
+
+  // Size references (all round numbers, axis-aligned).
   const objects = emptyMesh();
-  addSphere(objects, [-0.1, 0.1, -0.2], 0.03, [0.9, 0.2, 0.15]);
-  addBox(objects, [0.1, 0.05, -0.35], [0.06, 0.1, 0.06], [0.2, 0.4, 0.95], 0.5);
-  addCylinder(objects, [0.05, OPENING_H / 2, -0.12], 0.012, OPENING_H, [0.9, 0.85, 0.7]);
-  addSphere(objects, [0, 0.2, -0.45], 0.025, [0.2, 0.8, 0.3]);
-  addBox(objects, [0.14, 0.2, -0.08], [0.03, 0.03, 0.03], [0.95, 0.5, 0.1], 0.3);
-  addBox(objects, [-0.15, 0.015, -0.4], [0.08, 0.03, 0.08], [0.6, 0.3, 0.7]);
-  // Protrudes through the window toward the viewer.
-  addSphere(objects, [-0.06, 0.16, 0.06], 0.015, [1, 0.85, 0.1]);
+  // 100 mm cube on the floor in the back-left corner (x -150..-50, z -300..-200).
+  addBox(objects, [-0.1, 0.05, -0.25], [0.1, 0.1, 0.1], [0.2, 0.4, 0.95]);
+  // 50 mm cube on the floor, right, mid-depth (x 75..125, z -125..-75).
+  addBox(objects, [0.1, 0.025, -0.1], [0.05, 0.05, 0.05], [0.9, 0.2, 0.15]);
+  // 20 mm sphere floating at the box centre height, 150 mm deep.
+  addSphere(objects, [0, OPENING_H / 2, -0.15], 0.01, [0.2, 0.8, 0.3]);
+  // 10 mm post, floor to ceiling, 100 mm deep, 50 mm right of centre.
+  addCylinder(objects, [0.05, OPENING_H / 2, -0.1], 0.005, OPENING_H, [0.9, 0.85, 0.7]);
+  // 20 mm sphere 50 mm in front of the glass (protrudes toward the viewer).
+  addSphere(objects, [-0.06, OPENING_H / 2 + 0.05, 0.05], 0.01, [1, 0.85, 0.1]);
   addMeshNode(doc, scene, 'objects', objects, glossy);
 
   // The window: a camera at the opening's centre looking into the room (−z).
@@ -335,8 +389,8 @@ async function build(): Promise<void> {
     const l = lightsExt.createLight(name).setType('point').setIntensity(intensity).setColor(color);
     scene.addChild(doc.createNode(name).setTranslation(pos).setExtension('KHR_lights_punctual', l));
   };
-  addPoint('lamp-left', [-0.12, OPENING_H - 0.03, -0.15], 0.1, [1, 0.95, 0.85]);
-  addPoint('lamp-right', [0.14, OPENING_H - 0.03, -0.38], 0.07, [0.85, 0.9, 1]);
+  addPoint('lamp-left', [-0.1, OPENING_H - 0.03, -0.1], 0.06, [1, 0.95, 0.85]);
+  addPoint('lamp-right', [0.1, OPENING_H - 0.03, -0.25], 0.04, [0.85, 0.9, 1]);
   // Soft fill from the viewer's side so content in front of the window is not lit only from behind.
   // glTF directional lights point down their node's -z; aim this one into the room, slightly down.
   const fill = lightsExt

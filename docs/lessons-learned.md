@@ -21,3 +21,8 @@ refactors are not recorded.
   at screen distance, and the bezel is the dominant reference, so on-glass motion reads as object
   motion. Verify with a ruler and the one-eye test before suspecting the projection. Content
   near or in front of the glass sells the effect; deep content reads as sliding.
+- **Do not rotate the scene toward the viewer to fix "looking down into the room".** Aiming the
+  scene's axis at the rest eye puts the vanishing point at the screen centre, but it tilts
+  everything behind the glass (checkerboards lean), which breaks the expectation that the screen
+  is a flat plate and the scene is axis-aligned with it. Rejected 2025-11-25; the sanctioned
+  alternative is a constant `viewer.eye_offset_mm`.

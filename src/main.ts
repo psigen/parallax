@@ -8,7 +8,7 @@ import {
   scaleRect,
   viewportRectMm,
 } from './math/viewportRect';
-import { scale, v3 } from './math/vec';
+import { add, scale, v3 } from './math/vec';
 import { App } from './render/app';
 import { buildReferenceScene } from './render/referenceScene';
 import { loadScene } from './render/sceneLoader';
@@ -75,8 +75,7 @@ async function main(): Promise<void> {
 
   // ?scene=reference (depth markers to 30 m) or ?scene=<url> overrides the configured glTF.
   const sceneParam = params.get('scene');
-  const isReference = sceneParam === 'reference';
-  if (isReference) {
+  if (sceneParam === 'reference') {
     app.setSceneRoot(buildReferenceScene());
   } else {
     const { root, warnings: sceneWarnings } = await loadScene(
@@ -91,25 +90,18 @@ async function main(): Promise<void> {
   const [dx, dy, dz] = restOverride ?? config.viewer.rest_eye_mm;
   let restEyeMm = v3(dx, dy, dz);
   const eyeState = new EyeState(config.tracking, restEyeMm);
-  const applyAim = (): void => {
-    // The reference scene is for comparing against real objects, so it is never tilted.
-    app.setAim(
-      config.rendering.aim_scene_at_rest_eye && !isReference ? scale(restEyeMm, 1 / 1000) : null,
-    );
-  };
-  applyAim();
-  const tuning = new TuningPanel(
-    config.tracking,
-    config.rendering,
-    (t) => {
-      eyeState.setConfig(t);
-      if (mpTracker) {
-        mpTracker.yawCorrection = t.yaw_correction;
-        mpTracker.eyeSelect = t.eye;
-      }
-    },
-    () => applyAim(),
-  );
+  const [offX, offY, offZ] = config.viewer.eye_offset_mm;
+  const eyeOffsetMm = v3(offX, offY, offZ);
+  const hasOffset = offX !== 0 || offY !== 0 || offZ !== 0;
+  if (hasOffset)
+    log('info', `[viewer] applying eye offset ${config.viewer.eye_offset_mm.join(', ')} mm`);
+  const tuning = new TuningPanel(config.tracking, (t) => {
+    eyeState.setConfig(t);
+    if (mpTracker) {
+      mpTracker.yawCorrection = t.yaw_correction;
+      mpTracker.eyeSelect = t.eye;
+    }
+  });
   // ?diag=1 logs the first few tracker results in full (matrix included) for offline checking.
   let diagLeft = params.get('diag') ? 5 : 0;
 
@@ -170,7 +162,7 @@ async function main(): Promise<void> {
   const onSample = (s: EyeSample): void => {
     lastSample = s;
     sampleCount++;
-    eyeState.push(s);
+    eyeState.push(hasOffset ? { ...s, eyeMm: add(s.eyeMm, eyeOffsetMm) } : s);
   };
   let trackerStatus = 'starting';
   tracker.onSample(onSample);
@@ -231,7 +223,7 @@ async function main(): Promise<void> {
         eyeState.setConfig(config.tracking);
         break;
       case 'o': {
-        // Capture the current eye as the rest position: fallback on loss and the scene's aim.
+        // Capture the current eye as the rest position (fallback when the face is lost).
         const cur = eyeState.raw?.position;
         if (!cur) {
           warn('[rest] no tracked eye to capture');
@@ -239,7 +231,6 @@ async function main(): Promise<void> {
         }
         restEyeMm = v3(cur.x, cur.y, cur.z);
         eyeState.setDefaultEye(restEyeMm);
-        applyAim();
         const rounded = [restEyeMm.x, restEyeMm.y, restEyeMm.z].map((n) => Math.round(n));
         try {
           localStorage.setItem(REST_KEY, JSON.stringify(rounded));
@@ -248,7 +239,7 @@ async function main(): Promise<void> {
         }
         log(
           'info',
-          `[rest] rest eye set to ${rounded.join(', ')} mm. Paste into config: rest_eye_mm: [${rounded.join(', ')}]`,
+          `[rest] rest eye set to ${rounded.join(', ')} mm (loss fallback). Paste into config: rest_eye_mm: [${rounded.join(', ')}]`,
         );
         break;
       }
@@ -260,7 +251,6 @@ async function main(): Promise<void> {
         }
         restEyeMm = v3(...config.viewer.rest_eye_mm);
         eyeState.setDefaultEye(restEyeMm);
-        applyAim();
         log('info', '[rest] cleared stored rest eye; using the config value');
         break;
       case 'c': {

@@ -100,12 +100,18 @@ measure and calibrate (`c`). A factor near 2 means the camera is in its wide (0.
 
 ## "Looking at the screen centre looks down into the scene"
 
-Expected for a true window below eye level; see _Scene aim_ in [scene-authoring.md](scene-authoring.md).
-Sit normally, look at the screen centre and press `o`: the scene is re-aimed at that position.
-If the view is still tilted after that, the eye's _y_ is being misestimated: with your eyes
-level with the camera, the HUD `eye mm` y should read about +95 (the camera's height above the
-display centre). A consistent offset points at `extrinsics.position_mm`; an offset that grows
-with distance points at `extrinsics.rotation_deg` (camera pitch).
+Expected for a true window below eye level, and the scene is deliberately never tilted to hide
+it (the screen is a flat plate; see [scene-authoring.md](scene-authoring.md)). If you want the
+rest position to behave as if it were on the display's axis, set `viewer.eye_offset_mm` to the
+negative of your rest height, e.g. `[0, -150, 0]` for eyes 150 mm above the display centre.
+This shifts every tracked eye position by a constant and is a geometric lie by exactly that
+amount; parallax from head _motion_ stays correct. Press `o` to read your rest position off
+the HUD.
+
+If the view is tilted more than your eye height explains, the eye's _y_ is being misestimated:
+with your eyes level with the camera, the HUD `eye mm` y should read about +95 (the camera's
+height above the display centre). A consistent offset points at `extrinsics.position_mm`; an
+offset that grows with distance points at `extrinsics.rotation_deg` (camera pitch).
 
 ## Viewport placement
 

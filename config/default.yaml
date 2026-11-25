@@ -19,11 +19,15 @@ viewer:
   # the irises appear, so this scales every distance estimate.
   ipd_mm: 63
   # Where your eyes usually are, relative to the display centre (mm). Used before tracking locks
-  # on, after the face is lost, and (if rendering.aim_scene_at_rest_eye) to pose the scene so that
-  # looking at the screen centre from here looks straight down the scene's axis. A laptop display
-  # is well below eye level, so this is typically [0, 100..250, 450..650]. Press `o` while
-  # tracking to capture your current position; the console prints the line to paste here.
+  # on and after the face is lost. A laptop display is well below eye level, so this is typically
+  # [0, 100..250, 450..650]. Press `o` while tracking to capture your current position; the
+  # console prints the line to paste here.
   rest_eye_mm: [0, 150, 550]
+  # Added to every tracked eye position (mm). The scene is always axis-aligned with the screen
+  # (a flat plate at z = 0), so the only way to make "looking at the screen centre" look straight
+  # into the scene is to pretend the eye is lower than it is, e.g. [0, -150, 0] for eyes 150 mm
+  # above the display centre. Geometrically a lie; leave at zero for a true window.
+  eye_offset_mm: [0, 0, 0]
 
 default_camera: mbp14-builtin
 
@@ -93,7 +97,3 @@ rendering:
   scene_url: /scenes/room.glb
   near_mm: 10
   far_mm: 20000
-  # Rotate the scene about the display centre so its axis points at viewer.rest_eye_mm. The
-  # parallax stays geometrically exact; this only chooses how the scene is posed behind the glass.
-  # false: the scene's -z is the display normal (a true desk-height window: you look down into it).
-  aim_scene_at_rest_eye: true

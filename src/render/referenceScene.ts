@@ -15,7 +15,7 @@ import {
  * parallax against physical objects in the room: post pairs at 0.3 m, 1 m, 3 m, 10 m and 30 m
  * behind the glass, each scaled so that from the rest distance straight ahead they all overlap
  * on screen; moving the head fans them out by depth. Plus a ground grid and a sphere 0.1 m in
- * front of the glass. Select with `?scene=reference`. Not aimed (posts stay vertical).
+ * front of the glass. Select with `?scene=reference`.
  */
 export function buildReferenceScene(restDistanceM = 0.55): Group {
   const g = new Group();

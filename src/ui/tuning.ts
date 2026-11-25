@@ -1,16 +1,11 @@
 import GUI from 'lil-gui';
-import type { Config, TrackingConfig } from '../config/schema';
+import type { TrackingConfig } from '../config/schema';
 
 /** Live tuning of filter and prediction parameters (key `g`). Changes are not persisted. */
 export class TuningPanel {
   private readonly gui: GUI;
 
-  constructor(
-    tracking: TrackingConfig,
-    rendering: Config['rendering'],
-    onChange: (t: TrackingConfig) => void,
-    onRenderingChange: () => void,
-  ) {
+  constructor(tracking: TrackingConfig, onChange: (t: TrackingConfig) => void) {
     this.gui = new GUI({ title: 'tracking', width: 260 });
     const f = this.gui.addFolder('One Euro filter');
     f.add(tracking.filter, 'min_cutoff_hz', 0.1, 10, 0.1).name('min cutoff Hz');
@@ -25,10 +20,6 @@ export class TuningPanel {
     e.add(tracking, 'eye', ['cyclopean', 'left', 'right']).name('render for');
     e.add(tracking, 'yaw_correction').name('yaw correction');
     e.add(tracking, 'parallax_gain', 0.25, 2, 0.05).name('parallax gain');
-    this.gui
-      .add(rendering, 'aim_scene_at_rest_eye')
-      .name('aim scene at rest eye')
-      .onChange(onRenderingChange);
     this.gui.onChange(() => onChange(tracking));
     this.gui.hide();
   }

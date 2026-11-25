@@ -1,7 +1,6 @@
-import { ACESFilmicToneMapping, Color, Group, Scene, WebGLRenderer } from 'three';
+import { ACESFilmicToneMapping, Color, Scene, WebGLRenderer, type Group } from 'three';
 import type { ScreenRect } from '../math/offAxisProjection';
 import type { Vec3 } from '../math/vec';
-import { aimQuaternion } from './aim';
 import { OffAxisCamera } from './OffAxisCamera';
 
 /** Owns the renderer, scene graph and camera. The caller drives it once per animation frame. */
@@ -9,8 +8,6 @@ export class App {
   readonly renderer: WebGLRenderer;
   readonly scene = new Scene();
   readonly camera: OffAxisCamera;
-  /** Holds the loaded scene; rotated about the display centre by `setAim`. */
-  private readonly aim = new Group();
   private sceneRoot: Group | undefined;
 
   constructor(container: HTMLElement, nearM: number, farM: number) {
@@ -21,21 +18,14 @@ export class App {
     container.appendChild(this.renderer.domElement);
     this.scene.background = new Color(0x05070a);
     this.camera = new OffAxisCamera(nearM, farM);
-    this.aim.name = 'aim';
-    this.scene.add(this.aim);
     this.resize();
   }
 
+  /** The scene is always axis-aligned with the display: the screen is a flat plate at z = 0. */
   setSceneRoot(root: Group): void {
-    if (this.sceneRoot) this.aim.remove(this.sceneRoot);
+    if (this.sceneRoot) this.scene.remove(this.sceneRoot);
     this.sceneRoot = root;
-    this.aim.add(root);
-  }
-
-  /** Point the scene's axis at an eye position (metres), or null to align it with the display normal. */
-  setAim(eyeM: Vec3 | null): void {
-    if (eyeM) this.aim.quaternion.copy(aimQuaternion(eyeM));
-    else this.aim.quaternion.identity();
+    this.scene.add(root);
   }
 
   resize(): void {

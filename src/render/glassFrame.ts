@@ -28,6 +28,7 @@ export class GlassFrame extends Group {
       color: 0x000000,
       depthTest: false,
       depthWrite: false,
+      toneMapped: false,
     });
     for (let i = 0; i < 6; i++) {
       const outline = new Mesh(geo, outlineMat);

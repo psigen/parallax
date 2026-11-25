@@ -200,7 +200,7 @@ async function main(): Promise<void> {
           `[tracker] ${s.label}: ${s.width}x${s.height} @ ${s.frameRate} fps, delegate ${mpTracker.delegate ?? '?'}`,
         );
       }
-      if (mpTracker && config.lighting.enabled) {
+      if (mpTracker) {
         lighting = new CameraLighting(
           app.renderer,
           app.scene,

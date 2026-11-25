@@ -33,19 +33,14 @@ The app renders any glTF 2.0 scene (`.glb` or `.gltf`) given by `rendering.scene
 6. **Anything else is up to you**: materials, textures, vertex colours, animations (not played
    yet), nested nodes. Cameras other than `window` are ignored.
 
-## Scene aim (why "straight at the screen" looks straight into the room)
+## The screen is a flat plate
 
-A laptop display sits well below eye level. A faithful window at desk height therefore shows
-the room from above: with the eye level with the camera, the room's horizon is at the top edge
-of the screen. That is correct and disorienting. With `rendering.aim_scene_at_rest_eye: true`
-(default) the loaded scene is rotated about the display centre so that its −z axis points along
-the line from `viewer.rest_eye_mm` through the display centre (`src/render/aim.ts`). The window
-plane, the projection and the parallax are unchanged; only the pose of the scene behind the glass
-differs, as if the room had been built facing the viewer's chair. Press `o` while tracking to
-capture your current eye as the rest position (stored locally; the console prints the YAML line).
-
-Because the opening rim is tilted relative to the glass, keep the opening larger than the display
-(invariant 4) so the rim stays outside the viewport.
+The scene is never rotated to suit the viewer. The display is a flat plate at z = 0 and the
+scene's axes stay aligned with it, so a checkerboard floor is level with the desk no matter where
+the viewer sits. A laptop display sits below eye level, so a faithful window shows the room from
+slightly above; that is correct. The one sanctioned adjustment is `viewer.eye_offset_mm`, which
+shifts the _tracked eye_ (not the scene) and is zero by default; see
+[calibration.md](calibration.md).
 
 ## The bundled room
 

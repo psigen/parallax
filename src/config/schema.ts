@@ -67,6 +67,7 @@ export const configSchema = z
     viewer: z.object({
       ipd_mm: z.number().positive(),
       rest_eye_mm: vec3,
+      eye_offset_mm: vec3.default([0, 0, 0]),
     }),
     default_camera: z.string().min(1),
     cameras: z.array(cameraSchema).min(1),
@@ -75,7 +76,6 @@ export const configSchema = z
       scene_url: z.string().min(1),
       near_mm: z.number().positive(),
       far_mm: z.number().positive(),
-      aim_scene_at_rest_eye: z.boolean().default(true),
     }),
   })
   .refine((c) => c.cameras.some((cam) => cam.id === c.default_camera), {

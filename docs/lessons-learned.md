@@ -14,3 +14,10 @@ refactors are not recorded.
 - **One Euro velocity must difference raw samples, not raw-vs-filtered.** Using the filtered
   value as the "previous sample" biases the derivative upward during motion (about +25 % on a
   constant-velocity ramp), which would over-extrapolate in the predictor.
+- **Correct geometry still "feels wrong" with two eyes open.** Measured on the glass with a
+  ruler (2025-11-25, room scene, Z ≈ 550 mm, 100 mm head move): the sphere 450 mm behind moved
+  ~50 mm right (predicted 45), the sphere 60 mm in front moved ~10 mm left (predicted 12). Yet
+  far objects _felt_ like they moved with the head. A flat display tells both eyes everything is
+  at screen distance, and the bezel is the dominant reference, so on-glass motion reads as object
+  motion. Verify with a ruler and the one-eye test before suspecting the projection. Content
+  near or in front of the glass sells the effect; deep content reads as sliding.

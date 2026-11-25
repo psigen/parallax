@@ -105,8 +105,9 @@ it (the screen is a flat plate; see [scene-authoring.md](scene-authoring.md)). I
 rest position to behave as if it were on the display's axis, set `viewer.eye_offset_mm` to the
 negative of your rest height, e.g. `[0, -150, 0]` for eyes 150 mm above the display centre.
 This shifts every tracked eye position by a constant and is a geometric lie by exactly that
-amount; parallax from head _motion_ stays correct. Press `o` to read your rest position off
-the HUD.
+amount; parallax from head _motion_ stays correct. Press `o` while sitting normally: it sets
+the offset so your current x and y read as zero (stored locally; the console prints the YAML
+line). `O` clears it.
 
 If the view is tilted more than your eye height explains, the eye's _y_ is being misestimated:
 with your eyes level with the camera, the HUD `eye mm` y should read about +95 (the camera's

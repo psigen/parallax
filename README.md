@@ -21,16 +21,19 @@ The page asks for the webcam and starts tracking. Sit about half a metre from th
 - Press `f` for fullscreen: the physical-size math is exact there. Press `c` once to calibrate
   the focal length at a measured distance (see [docs/calibration.md](docs/calibration.md)).
 
-| Key | Action                                                   |
-| --- | -------------------------------------------------------- |
-| `h` | latency HUD                                              |
-| `d` | camera debug view (mirrored feed, iris landmarks, depth) |
-| `g` | live tuning panel (filter, prediction)                   |
-| `m` | 100 mm ruler square to verify the physical mapping       |
-| `f` | fullscreen                                               |
-| `c` | calibrate focal length at a prompted distance            |
-| `x` | clear the stored calibration                             |
-| `r` | reset the filter                                         |
+| Key | Action                                                        |
+| --- | ------------------------------------------------------------- |
+| `h` | latency HUD                                                   |
+| `d` | camera debug view (mirrored feed, iris landmarks, depth)      |
+| `g` | live tuning panel (filter, prediction)                        |
+| `m` | 100 mm ruler square to verify the physical mapping            |
+| `f` | fullscreen                                                    |
+| `c` | calibrate focal length at a prompted distance                 |
+| `x` | clear the stored calibration                                  |
+| `o` | set the rest eye position to the current one (aims the scene) |
+| `O` | clear the stored rest position                                |
+| `p` | copy a diagnostic snapshot to the clipboard                   |
+| `r` | reset the filter                                              |
 
 URL parameters: `?tracker=mouse` (drive the eye with the mouse, wheel for distance),
 `?tracker=static&eye=250,0,550` (fixed eye), `?camera=mx-brio` (a camera id from the config),

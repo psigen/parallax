@@ -38,6 +38,7 @@ src/math/                 pure, renderer-independent math (fully unit tested)
   oneEuro.ts, predictor.ts
 src/tracking/             camera source, MediaPipe worker, Tracker interface, mouse tracker
 src/render/               OffAxisCamera, glTF scene loader, render loop
+src/lighting/             webcam -> environment map + key lights (docs/lighting.md)
 src/ui/                   HUD, debug overlay, key bindings
 scripts/build-room.ts     generates public/scenes/room.glb
 scripts/smoke.ts          headless Chrome end-to-end boot check with a fake camera (npm run smoke)

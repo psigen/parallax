@@ -12,5 +12,6 @@ for surprising dead-ends recorded in [lessons-learned.md](lessons-learned.md).
 | [tracking-pipeline.md](tracking-pipeline.md)   | Camera capture, MediaPipe worker, eye estimate, filter, predictor |
 | [calibration.md](calibration.md)               | Getting real numbers for your display and camera                  |
 | [scene-authoring.md](scene-authoring.md)       | Invariants a glTF scene must satisfy                              |
+| [lighting.md](lighting.md)                     | Webcam as environment map and estimated key lights                |
 | [latency.md](latency.md)                       | Latency budget, how it is measured, measured results              |
 | [lessons-learned.md](lessons-learned.md)       | Dead-ends worth not repeating                                     |

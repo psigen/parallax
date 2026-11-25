@@ -1,0 +1,44 @@
+{
+  "name": "parallax-demo",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Webcam head-tracked off-axis parallax 3D demo: the browser window behaves like a physical window into a scene.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json && tsc --noEmit -p tsconfig.node.json",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test",
+    "build:room": "tsx scripts/build-room.ts",
+    "fetch:models": "sh scripts/fetch-models.sh"
+  },
+  "dependencies": {
+    "@mediapipe/tasks-vision": "^1.2.3",
+    "lil-gui": "^0.21.0",
+    "three": "^0.187.0",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@types/node": "^26.6.10",
+    "@types/three": "^0.187.0",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.10.1",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.74.0",
+    "vite": "^8.3.8",
+    "vite-plugin-static-copy": "^4.1.1",
+    "vitest": "^5.1.2"
+  }
+}

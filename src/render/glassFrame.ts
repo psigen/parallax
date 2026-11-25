@@ -18,7 +18,12 @@ export class GlassFrame extends Group {
     this.visible = false;
     this.renderOrder = 1000;
     const geo = new PlaneGeometry(1, 1);
-    const coreMat = new MeshBasicMaterial({ color: 0x00ff66, depthTest: false, depthWrite: false });
+    const coreMat = new MeshBasicMaterial({
+      color: 0x00ff66,
+      depthTest: false,
+      depthWrite: false,
+      toneMapped: false,
+    });
     const outlineMat = new MeshBasicMaterial({
       color: 0x000000,
       depthTest: false,

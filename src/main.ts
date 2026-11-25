@@ -75,7 +75,8 @@ async function main(): Promise<void> {
 
   // ?scene=reference (depth markers to 30 m) or ?scene=<url> overrides the configured glTF.
   const sceneParam = params.get('scene');
-  if (sceneParam === 'reference') {
+  const isReference = sceneParam === 'reference';
+  if (isReference) {
     app.setSceneRoot(buildReferenceScene());
   } else {
     const { root, warnings: sceneWarnings } = await loadScene(
@@ -91,7 +92,10 @@ async function main(): Promise<void> {
   let restEyeMm = v3(dx, dy, dz);
   const eyeState = new EyeState(config.tracking, restEyeMm);
   const applyAim = (): void => {
-    app.setAim(config.rendering.aim_scene_at_rest_eye ? scale(restEyeMm, 1 / 1000) : null);
+    // The reference scene is for comparing against real objects, so it is never tilted.
+    app.setAim(
+      config.rendering.aim_scene_at_rest_eye && !isReference ? scale(restEyeMm, 1 / 1000) : null,
+    );
   };
   applyAim();
   const tuning = new TuningPanel(

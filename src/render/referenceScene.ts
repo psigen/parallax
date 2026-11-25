@@ -12,11 +12,12 @@ import {
 
 /**
  * A diagnostic scene with markers at known depths, in the screen frame (metres), for judging
- * parallax against physical objects in the room: posts at 0.3 m, 1 m, 3 m, 10 m and 30 m behind
- * the glass, a ground grid at floor level, and a sphere 0.1 m in front of the glass.
- * Select with `?scene=reference`.
+ * parallax against physical objects in the room: post pairs at 0.3 m, 1 m, 3 m, 10 m and 30 m
+ * behind the glass, each scaled so that from the rest distance straight ahead they all overlap
+ * on screen; moving the head fans them out by depth. Plus a ground grid and a sphere 0.1 m in
+ * front of the glass. Select with `?scene=reference`. Not aimed (posts stay vertical).
  */
-export function buildReferenceScene(): Group {
+export function buildReferenceScene(restDistanceM = 0.55): Group {
   const g = new Group();
   g.name = 'reference';
   const depths: [number, number][] = [
@@ -28,20 +29,21 @@ export function buildReferenceScene(): Group {
   ];
   for (const [d, color] of depths) {
     const mat = new MeshStandardMaterial({ color, roughness: 0.6 });
-    // Post height and radius grow with depth so each stays a similar size on screen.
-    const h = 0.4 * (1 + d);
-    const r = 0.01 * (1 + d);
+    // Scale with distance from the rest eye so every marker subtends the same angle from there.
+    const s = (restDistanceM + d) / restDistanceM;
+    const h = 0.16 * s;
+    const r = 0.004 * s;
     for (const side of [-1, 1]) {
       const post = new Mesh(new CylinderGeometry(r, r, h, 16), mat);
-      post.position.set(side * 0.25 * (1 + d), h / 2 - 0.3, -d);
+      post.position.set(side * 0.08 * s, 0, -d);
       g.add(post);
     }
-    const bar = new Mesh(new BoxGeometry(0.5 * (1 + d), r * 2, r * 2), mat);
-    bar.position.set(0, 0.1 * (1 + d), -d);
+    const bar = new Mesh(new BoxGeometry(0.16 * s, r * 2, r * 2), mat);
+    bar.position.set(0, 0.06 * s, -d);
     g.add(bar);
   }
-  const grid = new GridHelper(60, 60, 0x888888, 0x444444);
-  grid.position.y = -0.3;
+  const grid = new GridHelper(80, 80, 0x666666, 0x333333);
+  grid.position.y = -0.25;
   g.add(grid);
   const near = new Mesh(
     new SphereGeometry(0.015, 24, 16),

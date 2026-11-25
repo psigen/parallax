@@ -82,6 +82,22 @@ flat display's stereo cue is winning. Separate them objectively:
 3. Close one eye (and set `render for` to that eye in `g`). If far markers now hold still,
    the geometry is right and the two-eyed impression was the stereo conflict.
 
+## The ruler-on-screen test (objective)
+
+Mark where an object appears on the screen, move your head a measured `Δx` sideways, mark again,
+and measure the shift with a ruler on the glass. With the eye `Z` from the screen:
+
+- object `d` behind the glass: shifts `Δx · d / (Z + d)` in the **same** direction as your head
+  (the room's back wall, 500 mm behind, at Z = 550 mm: 48 mm per 100 mm of head travel);
+- object `d` in front of the glass: shifts `Δx · d / (Z − d)` in the **opposite** direction
+  (the room's yellow sphere, 60 mm in front: 12 mm; the reference scene's, 100 mm in front:
+  22 mm).
+
+Lateral tracking does not depend on the focal length (it cancels between depth and lateral
+position), so `eye mm` x can be right while z is wrong. If the measured shifts are too small by
+a constant factor, `Z` is overestimated by about that factor: compare `eye mm` z with a tape
+measure and calibrate (`c`). A factor near 2 means the camera is in its wide (0.5x) mode.
+
 ## "Looking at the screen centre looks down into the scene"
 
 Expected for a true window below eye level; see _Scene aim_ in [scene-authoring.md](scene-authoring.md).

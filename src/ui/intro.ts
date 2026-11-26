@@ -53,11 +53,11 @@ export class IntroOverlay {
 
     const p = document.createElement('p');
     p.innerHTML =
-      'Hi! This is a little experiment in making your screen feel like a window. If you let it use ' +
-      'your webcam, it keeps an eye on where you are and redraws the scene from your point of view, so ' +
-      'when you lean or move your head, the room behind the glass shifts the way a real one would. ' +
-      "It's easiest to see with one eye closed and from about an arm's length away. Everything stays " +
-      'on your computer; the video never goes anywhere.';
+      'This page turns your screen into a window onto a 3D scene. With your permission, the ' +
+      'webcam tracks the position of your eyes, and the scene is rendered with the exact ' +
+      'perspective for that position. Move your head and the view through the window changes ' +
+      'as it would through real glass. For the clearest effect, close one eye and sit about an ' +
+      "arm's length away.";
     Object.assign(p.style, { margin: '0 0 20px', color: '#d6dcea' });
 
     const row = document.createElement('div');
@@ -106,9 +106,9 @@ export class IntroOverlay {
 
     const hint = document.createElement('p');
     hint.innerHTML =
-      "Pick a scene and press Start; your browser will ask about the camera. If you're curious what's " +
-      'going on under the hood, <kbd>h</kbd> shows the numbers and <kbd>F</kbd> goes fullscreen. You ' +
-      'can change scenes any time from the menu in the top-right corner.';
+      'Choose a scene and press Start; the browser will ask for camera access. Press <kbd>h</kbd> ' +
+      'for the diagnostics HUD and <kbd>F</kbd> for fullscreen. The menu in the top-right corner ' +
+      'switches scenes later.';
     Object.assign(hint.style, { margin: '16px 0 0', fontSize: '13px', color: '#9aa5bd' });
     for (const kbd of hint.querySelectorAll('kbd')) {
       Object.assign(kbd.style, {

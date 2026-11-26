@@ -121,14 +121,14 @@ measure and calibrate (`c`). A factor near 2 means the camera is in its wide (0.
 Expected for a true window below eye level, and the scene is deliberately never tilted to hide
 it (the screen is a flat plate; see [scene-authoring.md](scene-authoring.md)). The sanctioned
 adjustment is `viewer.eye_offset_mm`, a constant added to every tracked eye position. It
-defaults (`null`) to the negated camera position, so an eye centred in the camera image reads
-x 0, y 0: the view is "straight in" when you are on the camera's axis. Press `o` while sitting
-normally to re-zero only the Y component at your current height (x and z are never touched;
-the value is stored per camera and the console prints the YAML line). `O` reverts to the
-default. Set `[0, 0, 0]` for a strictly correct window measured from the display centre.
-Parallax from head _motion_ is unaffected by any of this.
+defaults to `[0, 0, 0]`: a strictly correct window with the eye measured from the display
+centre. Press `o` while sitting normally to re-zero only the Y component at your current height
+(x and z are never touched; the value is stored per camera and the console prints the YAML
+line). `O` reverts to the config value. Any non-zero offset is a deliberate lie by that amount
+and invalidates comparisons with real-world geometry. Parallax from head _motion_ is unaffected
+by any of this.
 
-Checking the camera extrinsic: with `[0, 0, 0]` and your eyes level with the camera, the HUD
+Checking the camera extrinsic: with the offset at zero and your eyes level with the camera, the HUD
 `eye mm` y should read about +95 (the camera's height above the display centre). A consistent
 offset points at `extrinsics.position_mm`; an offset that grows with distance points at
 `extrinsics.rotation_deg` (camera pitch).

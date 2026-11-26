@@ -34,7 +34,7 @@ The page asks for the webcam and starts tracking. Sit about half a metre from th
 | `c` | calibrate focal length at a prompted distance                                  |
 | `x` | clear the stored calibration                                                   |
 | `o` | re-zero the vertical view: offset tracking so the current y reads 0            |
-| `O` | revert the eye offset to the default (negated camera position)                 |
+| `O` | revert the eye offset to the config value                                      |
 | `p` | copy a diagnostic snapshot to the clipboard                                    |
 | `r` | reset the filter                                                               |
 

@@ -22,14 +22,14 @@ viewer:
   # on and after the face is lost. A laptop display is well below eye level, so this is typically
   # [0, 100..250, 450..650].
   rest_eye_mm: [0, 150, 550]
-  # Added to every tracked eye position (mm). The scene is always axis-aligned with the screen
-  # (a flat plate at z = 0), so this is how "looking at the screen centre" is made to look
-  # straight into the scene: the tracked eye is shifted onto the axis. null means the negated
-  # camera position (extrinsics.position_mm), so an eye centred in the camera image reads x 0,
-  # y 0. Press `o` while tracking to re-zero the Y component at your current position (x and z
-  # are left alone); the console prints the line to paste here. `O` reverts to this value.
-  # [0, 0, 0] gives a true window: eye measured from the display centre.
-  eye_offset_mm: null
+  # Added to every tracked eye position (mm). Zero is the strict window: the eye is measured from
+  # the display centre and the view is geometrically exact. The scene is always axis-aligned with
+  # the screen (a flat plate at z = 0), so this is the only way to make "looking at the screen
+  # centre" look straight into the scene: shift the tracked eye onto the axis, e.g. [0, -150, 0]
+  # for eyes 150 mm above the display centre. That is a deliberate lie by exactly that amount
+  # and breaks any comparison with real-world geometry. Press `o` while tracking to re-zero the
+  # Y component at your current position (x and z are left alone); `O` reverts to this value.
+  eye_offset_mm: [0, 0, 0]
 
 default_camera: mbp14-builtin
 

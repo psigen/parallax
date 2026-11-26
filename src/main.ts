@@ -154,14 +154,8 @@ async function main(): Promise<void> {
   // ?glass=1 shows the screen-plane frame from the start (same as pressing `w`).
   app.glassFrame.visible = params.get('glass') === '1';
 
-  // Constant added to every tracked eye position. Default: the negated camera position, so an
-  // eye centred in the camera image reads x 0, y 0. `o` re-zeroes only the Y component.
-  const defaultOffset = (): Vec3 => {
-    if (config.viewer.eye_offset_mm) return v3(...config.viewer.eye_offset_mm);
-    if (!mpTracker) return v3(0, 0, 0);
-    const [px, py, pz] = mpTracker.model.extrinsics.position_mm;
-    return v3(-px, -py, -pz);
-  };
+  // Constant added to every tracked eye position (zero = strict window). `o` re-zeroes only Y.
+  const defaultOffset = (): Vec3 => v3(...config.viewer.eye_offset_mm);
   let eyeOffsetMm = defaultOffset();
   const storedY = readOffsetYOverride(cameraId);
   if (storedY !== undefined) eyeOffsetMm = v3(eyeOffsetMm.x, storedY, eyeOffsetMm.z);

@@ -30,14 +30,21 @@ export const extrinsicsSchema = z.object({
   rotation_deg: vec3.default([0, 0, 0]),
 });
 
+export const captureSchema = z.object({
+  width_px: z.number().int().positive(),
+  height_px: z.number().int().positive(),
+  frame_rate: z.number().positive(),
+  /** Phones: which camera to ask for. */
+  facing_mode: z.enum(['user', 'environment']).optional(),
+  /** 'widest' asks for the camera's minimum zoom (largest field of view); a number pins it. */
+  zoom: z.union([z.literal('widest'), z.number().positive()]).optional(),
+});
+export type CaptureConfig = z.infer<typeof captureSchema>;
+
 export const cameraSchema = z.object({
   id: z.string().min(1),
   label_match: z.string().min(1),
-  capture: z.object({
-    width_px: z.number().int().positive(),
-    height_px: z.number().int().positive(),
-    frame_rate: z.number().positive(),
-  }),
+  capture: captureSchema,
   mirrored: z.boolean().default(false),
   intrinsics: intrinsicsSchema,
   extrinsics: extrinsicsSchema,
@@ -95,17 +102,42 @@ export const lightingSchema = z.object({
     .prefault({}),
 });
 
+const screenSpecSchema = z.object({
+  ref: z.string().min(1).optional(),
+  name: z.string().optional(),
+  width_mm: z.number().positive().optional(),
+  height_mm: z.number().positive().optional(),
+  viewport_override_mm: rectMmSchema.nullable().optional(),
+});
+const cameraSpecSchema = z.object({
+  ref: z.string().min(1).optional(),
+  id: z.string().min(1).optional(),
+  label_match: z.string().min(1).optional(),
+  hfov_deg: z.number().positive().max(179).optional(),
+  intrinsics: intrinsicsSchema.optional(),
+  capture: captureSchema.optional(),
+  mirrored: z.boolean().optional(),
+  position_mm: vec3.optional(),
+  rotation_deg: vec3.optional(),
+});
+export const deviceSectionSchema = z.object({
+  screen: z.union([z.literal('auto'), screenSpecSchema]).default('auto'),
+  cameras: z.union([z.literal('auto'), z.array(cameraSpecSchema)]).default('auto'),
+  default_camera: z.union([z.literal('auto'), z.string().min(1)]).default('auto'),
+});
+export type DeviceSection = z.infer<typeof deviceSectionSchema>;
+export type ScreenSpec = z.infer<typeof screenSpecSchema>;
+export type CameraSpec = z.infer<typeof cameraSpecSchema>;
+
 export const configSchema = z
   .object({
-    screen: screenSchema,
+    device: deviceSectionSchema.prefault({}),
     viewer: z.object({
       ipd_mm: z.number().positive(),
       rest_eye_mm: vec3,
       /** Constant added to every tracked eye position; zero is the strict window. */
       eye_offset_mm: vec3.default([0, 0, 0]),
     }),
-    default_camera: z.string().min(1),
-    cameras: z.array(cameraSchema).min(1),
     tracking: trackingSchema,
     rendering: z.object({
       scene_url: z.string().min(1),
@@ -114,18 +146,14 @@ export const configSchema = z
     }),
     lighting: lightingSchema.prefault({}),
   })
-  .refine((c) => c.cameras.some((cam) => cam.id === c.default_camera), {
-    message: 'default_camera must name one of the entries in cameras',
-    path: ['default_camera'],
-  })
   .refine((c) => c.rendering.far_mm > c.rendering.near_mm, {
     message: 'rendering.far_mm must exceed rendering.near_mm',
     path: ['rendering', 'far_mm'],
   });
 
 export type Config = z.infer<typeof configSchema>;
-export type ScreenConfig = Config['screen'];
-export type CameraConfig = Config['cameras'][number];
+export type ScreenConfig = z.infer<typeof screenSchema>;
+export type CameraConfig = z.infer<typeof cameraSchema>;
 export type Intrinsics = CameraConfig['intrinsics'];
 export type Extrinsics = CameraConfig['extrinsics'];
 export type TrackingConfig = Config['tracking'];

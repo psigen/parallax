@@ -1,17 +1,21 @@
 # Calibration and verification
 
-All numbers live in `config/default.yaml`. Calibration overrides made at runtime (`c`, `o`,
-arrow nudges) are stored per camera in `localStorage` and printed as YAML lines to paste back
-into the config; `C` and `O` clear them. Keys referenced below are listed in the README.
+The display and camera parameters are resolved at startup by device detection
+([devices.md](devices.md)); the HUD `device` line shows what was chosen and how confident the
+match is, and `config/default.yaml` can override any of it. Calibration overrides made at
+runtime (`c`, `o`, arrow nudges) are stored per camera id in `localStorage` and printed as YAML
+lines to paste back into the config; `C` and `O` clear them. Keys referenced below are listed
+in the README.
 
 ## 1. What matters, in order
 
-1. **Display size** (`screen.width_mm`, `height_mm`). Exact from the panel spec. 14-inch MacBook
-   Pro: 3024 x 1964 px at 254 ppi → 302.4 x 196.4 mm.
-2. **Focal length** (`cameras[].intrinsics.fx_px`, `fy_px`). Sets the absolute depth scale.
-   Not published by Apple; calibrate (section 3).
-3. **Camera position** (`cameras[].extrinsics.position_mm`). Shifts every eye estimate by a
-   constant. The MacBook camera is in the notch, top centre: `(0, 94.7, 0)`.
+1. **Display size** (`device.screen`, from the index or `width_mm`/`height_mm`). Exact when the
+   device is matched; an extrapolated size is flagged `guessed` on the HUD and should be pinned
+   with `?screen_mm=WxH` or a config entry after measuring.
+2. **Focal length** (from the camera entry's nominal FOV, or `intrinsics`). Sets the absolute
+   depth scale. Nominal FOVs are estimates; calibrate (section 3).
+3. **Camera position** (from the index, or `position_mm`). Shifts every eye estimate by a
+   constant. Built-in cameras are placed from the screen entry; external ones from a mount guess.
 4. **IPD** (`viewer.ipd_mm`). Scales depth linearly. 63 mm is the adult average; measure yours
    in a mirror with a ruler for better than ~5 % depth accuracy.
 5. **Eye offset** (`viewer.eye_offset_mm`, default `[0, 0, 0]`). A constant added to the tracked
@@ -123,11 +127,11 @@ tells both eyes everything is at screen distance, and the bezel is the dominant 
 - **Snapshot**: `p` copies the HUD, browser metrics, camera settings, last tracker reading and
   config to the clipboard for sharing.
 
-## 9. Another camera
+## 9. Another camera or display
 
-Add an entry under `cameras:` with a `label_match` substring of the device name (see
-`navigator.mediaDevices.enumerateDevices()` in devtools, or the HUD log line after start),
-measure its lens position relative to the display centre, then calibrate the focal length as in
-section 3. Select it with `?camera=<id>` or make it `default_camera`. The MX Brio profile in the
-default config is a starting point (1080p60; its FOV setting in Logi Options+ changes the focal
-length, so recalibrate after changing it).
+Plug it in and look at the HUD `device` line: recognised cameras get their index entry
+(nominal FOV, mount guess), unknown ones a generic entry with a slug id. To make it exact, add
+an entry to `config/devices.yaml` (see [devices.md](devices.md), "Adding a device"), or override
+in `config/default.yaml` (`cameras: [{ ref: <id>, position_mm: [...] }]`), then calibrate the
+focal length as in section 3. Select a camera with `?camera=<id>` or `default_camera`. For a
+monitor, press `D` to let the browser report its label, or pin the size with `?screen_mm=WxH`.

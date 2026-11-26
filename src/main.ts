@@ -1,5 +1,17 @@
 import defaultYaml from '../config/default.yaml?raw';
+import devicesYaml from '../config/devices.yaml?raw';
 import { findCamera, mmToM, parseConfig } from './config/load';
+import type { ScreenConfig } from './config/schema';
+import { parseDeviceIndex } from './device/index';
+import {
+  probe,
+  probeCameras,
+  probeModel,
+  probeScreenDetails,
+  screenSignature,
+  type Observation,
+} from './device/observation';
+import { resolveDevice, type ResolvedDevice } from './device/resolve';
 import {
   fullScreenRectMm,
   readBrowserMetrics,
@@ -29,6 +41,7 @@ import { TuningPanel } from './ui/tuning';
 const WASM_PATH = '/mediapipe/wasm';
 const MODEL_PATH = '/models/face_landmarker.task';
 const focalKey = (cameraId: string) => `parallax.focal_px.${cameraId}`;
+const deviceKey = (signature: string) => `parallax.device.${signature}`;
 const offsetKey = (cameraId: string) => `parallax.eye_offset_mm.${cameraId}`;
 
 function readOffsetOverride(cameraId: string): [number, number, number] | undefined {
@@ -113,18 +126,66 @@ async function main(): Promise<void> {
   // ?diag=1 logs the first few tracker results in full (matrix included) for offline checking.
   let diagLeft = params.get('diag') ? 5 : 0;
 
-  // Tracker selection: ?tracker=camera (default) | mouse | static (&eye=x,y,z); ?camera=<id>.
+  // ---- Device: observe the machine, resolve screen + cameras (docs/devices.md) ----
   const trackerKind = params.get('tracker') ?? 'camera';
-  const cameraId = params.get('camera') ?? config.default_camera;
+  const index = parseDeviceIndex(devicesYaml);
+  const obs: Observation = probe();
+  if (trackerKind === 'camera') obs.cameras = await probeCameras();
+  if (obs.model === undefined) {
+    const model = await probeModel();
+    if (model) obs.model = model;
+  }
+  const signature = screenSignature(obs);
+  let storedDevice: string | undefined;
+  try {
+    storedDevice = localStorage.getItem(deviceKey(signature)) ?? undefined;
+  } catch {
+    /* ignore */
+  }
+  const forcedDevice = params.get('device') ?? storedDevice;
+  if (params.get('device')) {
+    try {
+      localStorage.setItem(deviceKey(signature), params.get('device')!);
+    } catch {
+      /* ignore */
+    }
+  }
+  const pinned = params.get('screen_mm')?.split('x').map(Number);
+  const resolveOpts = {
+    ...(forcedDevice ? { forcedScreenId: forcedDevice } : {}),
+    ...(pinned?.length === 2 && pinned.every((n) => n > 0)
+      ? { pinnedScreenMm: [pinned[0], pinned[1]] as [number, number] }
+      : {}),
+  };
+  let device: ResolvedDevice = resolveDevice(config.device, obs, index, resolveOpts);
+  let screenCfg: ScreenConfig = device.screen;
+  const describeDevice = (d: ResolvedDevice): string => {
+    const p = d.provenance.screen;
+    const est = p.estimates.length ? ', estimated' : '';
+    return `${p.name} [${p.source}/${p.confidence}${est}: ${p.reasons.join(', ')}]`;
+  };
+  log('info', `[device] ${describeDevice(device)}`);
+  for (const cam of device.cameras) {
+    const p = device.provenance.cameras[cam.id];
+    if (p)
+      log(
+        'info',
+        `[device] camera "${cam.label_match}" → ${cam.id} (${p.confidence}${p.estimates.length ? '; ' + p.estimates.join('; ') : ''})`,
+      );
+  }
+
+  // Tracker selection: ?tracker=camera (default) | mouse | static (&eye=x,y,z); ?camera=<id>.
+  const cameraId = params.get('camera') ?? device.defaultCamera ?? 'none';
   let tracker: Tracker;
   let mpTracker: MediapipeTracker | undefined;
   if (trackerKind === 'static') {
     const [sx = 0, sy = 0, sz = dz] = (params.get('eye') ?? '').split(',').map(Number);
     tracker = new StaticTracker(v3(sx, sy, sz));
-  } else if (trackerKind === 'mouse') {
+  } else if (trackerKind === 'mouse' || device.cameras.length === 0) {
+    if (trackerKind === 'camera') warn('[device] no camera found; using the mouse tracker');
     tracker = new MouseTracker(300, dz);
   } else {
-    const camera = findCamera(config, cameraId);
+    const camera = findCamera(device.cameras, cameraId);
     const focalOverridePx = readFocalOverride(camera.id);
     if (focalOverridePx !== undefined) {
       console.info(
@@ -156,6 +217,8 @@ async function main(): Promise<void> {
   // ?viewport=full assumes the viewport covers the whole display (exact in fullscreen, and the
   // only sane choice when the browser reports bogus screen metrics, e.g. headless).
   const viewportMode = params.get('viewport') ?? 'auto';
+  // ?hud=1 shows the HUD from the start (same as pressing `h`); it is hidden by default.
+  if (params.get('hud') === '1') hud.toggle();
   // ?glass=1 shows the screen-plane frame from the start (same as pressing `g`).
   app.glassFrame.visible = params.get('glass') === '1';
 
@@ -250,7 +313,23 @@ async function main(): Promise<void> {
   };
   void startTracker();
 
-  window.addEventListener('resize', () => app.resize());
+  window.addEventListener('resize', () => {
+    app.resize();
+    const fresh = probe();
+    if (screenSignature(fresh) !== screenSignature(obs)) {
+      Object.assign(obs, {
+        cssWidth: fresh.cssWidth,
+        cssHeight: fresh.cssHeight,
+        availHeight: fresh.availHeight,
+        dpr: fresh.dpr,
+      });
+      delete obs.screenLabel;
+      delete obs.isInternal;
+      device = resolveDevice(config.device, obs, index, resolveOpts);
+      screenCfg = device.screen;
+      warn(`[device] display changed: ${describeDevice(device)}`);
+    }
+  });
   window.addEventListener('keydown', (e) => {
     switch (e.key) {
       case 'h':
@@ -275,6 +354,24 @@ async function main(): Promise<void> {
       case 'g':
         app.glassFrame.visible = !app.glassFrame.visible;
         break;
+      case 'D': {
+        void probeScreenDetails().then((details) => {
+          if (!details) {
+            warn(
+              '[device] screen details unavailable (needs Chromium and the window-management permission)',
+            );
+            return;
+          }
+          Object.assign(obs, details);
+          device = resolveDevice(config.device, obs, index, resolveOpts);
+          screenCfg = device.screen;
+          log(
+            'info',
+            `[device] screen "${details.screenLabel ?? '?'}" (${details.isInternal ? 'internal' : 'external'}): ${describeDevice(device)}`,
+          );
+        });
+        break;
+      }
       case 'p': {
         const text = snapshot();
         console.info(text);
@@ -415,6 +512,7 @@ async function main(): Promise<void> {
       hud.text,
       debugLine,
       `config    ${JSON.stringify(config.tracking)}`,
+      `device    ${JSON.stringify({ observation: obs, provenance: device.provenance, screen: device.screen })}`,
     ].join('\n');
   };
 
@@ -431,7 +529,7 @@ async function main(): Promise<void> {
     const gain = config.tracking.parallax_gain;
     const eyeRenderMm = gain === 1 ? eyeMm : v3(eyeMm.x * gain, eyeMm.y * gain, eyeMm.z);
 
-    const override = config.screen.viewport_override_mm;
+    const override = screenCfg.viewport_override_mm;
     const rectMm = override
       ? {
           left: override.left_mm,
@@ -440,8 +538,8 @@ async function main(): Promise<void> {
           top: override.top_mm,
         }
       : viewportMode === 'full'
-        ? fullScreenRectMm(config.screen)
-        : viewportRectMm(readBrowserMetrics(window), config.screen);
+        ? fullScreenRectMm(screenCfg)
+        : viewportRectMm(readBrowserMetrics(window), screenCfg);
 
     if (lighting) {
       lighting.tick(tFrameMs);
@@ -482,6 +580,7 @@ async function main(): Promise<void> {
       browser: browserLine(),
       camera: cameraLine(),
       lighting: lightingLine(),
+      device: describeDevice(device),
       warnings: messages,
     });
     requestAnimationFrame(frame);

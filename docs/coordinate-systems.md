@@ -32,6 +32,8 @@ re-roots the scene so that node's pose becomes the screen frame (see
 - The camera's nominal pose is "in the screen plane looking straight at the viewer". A camera
   point (X, Y, Z) with Z the distance in front of the lens maps to screen frame
   `position_mm + R · (X, Y, Z)` where R is built from `rotation_deg` (pitch, yaw, roll).
+  `position_mm` comes from the device index for built-in cameras and from a mount guess for
+  external ones ([devices.md](devices.md)); override it in `config/default.yaml` when measured.
 
 ## MediaPipe landmark conventions
 

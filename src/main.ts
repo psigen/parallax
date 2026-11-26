@@ -143,25 +143,34 @@ async function main(): Promise<void> {
     app.setSceneRoot(ref);
     sceneBounds = new Box3().setFromObject(ref);
   } else {
-    const loaded = await loadSceneEntry(
-      sceneEntry,
-      localUrlFor(sceneEntry),
-      {
-        lightsScale: config.lighting.enabled ? config.lighting.scene_lights_scale : 1,
-        shadows,
-        placement,
-      },
-      { scene: app.scene, renderer: app.renderer },
-    );
+    const loadOpts = {
+      lightsScale: config.lighting.enabled ? config.lighting.scene_lights_scale : 1,
+      shadows,
+      placement,
+    };
+    const gl = { scene: app.scene, renderer: app.renderer };
+    let entryToShow: SceneEntry = sceneEntry;
+    let loaded;
+    try {
+      loaded = await loadSceneEntry(sceneEntry, localUrlFor(sceneEntry), loadOpts, gl);
+    } catch (err) {
+      // A missing or broken asset (e.g. not yet uploaded) must not blank the page.
+      warn(
+        `[scene] ${sceneEntry.id} failed to load (${err instanceof Error ? err.message : String(err)}); showing the bundled room`,
+      );
+      entryToShow = resolveSceneRef('room', manifest);
+      Object.assign(placement, entryToShow.placement);
+      loaded = await loadSceneEntry(entryToShow, localUrlFor(entryToShow), loadOpts, gl);
+    }
     for (const w of loaded.warnings) warn(`[scene] ${w.code}: ${w.message}`);
     app.setSceneRoot(loaded.root);
     sceneBounds = loaded.bounds;
     placementGroup = loaded.placementGroup;
     splatCount = loaded.splatCount;
-    credit.set(sceneEntry.credit, sceneEntry.source_url);
+    credit.set(entryToShow.credit, entryToShow.source_url);
     log(
       'info',
-      `[scene] ${sceneEntry.name} (${sceneEntry.kind}${splatCount ? `, ${splatCount.toLocaleString()} splats` : ''})${placementGroup ? `; ${placementYaml(placement)}` : ''}`,
+      `[scene] ${entryToShow.name} (${entryToShow.kind}${splatCount ? `, ${splatCount.toLocaleString()} splats` : ''})${placementGroup ? `; ${placementYaml(placement)}` : ''}`,
     );
   }
   const applyPlacementLive = (): void => {

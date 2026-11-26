@@ -35,6 +35,7 @@ import {
 } from './scenes/manifest';
 import { placementMatrix, placementYaml } from './scenes/placement';
 import { CreditOverlay } from './ui/credit';
+import { consumeAutostart, switchScene } from './ui/autostart';
 import { IntroOverlay } from './ui/intro';
 import { ScenePicker } from './ui/scenePicker';
 import { Box3, type Group } from 'three';
@@ -408,14 +409,7 @@ async function main(): Promise<void> {
   // Landing dialog: explanation, scene choice, Start. The camera is requested only after Start.
   // Skipped for ?intro=0, for the mouse/static trackers, and right after the dialog itself
   // reloads the page to switch scenes.
-  const AUTOSTART_KEY = 'parallax.autostart';
-  let autostart = false;
-  try {
-    autostart = sessionStorage.getItem(AUTOSTART_KEY) === '1';
-    sessionStorage.removeItem(AUTOSTART_KEY);
-  } catch {
-    /* ignore */
-  }
+  const autostart = consumeAutostart();
   const showIntro = params.get('intro') !== '0' && trackerKind === 'camera' && !autostart;
   if (showIntro) {
     trackerStatus = 'waiting for start';
@@ -424,14 +418,7 @@ async function main(): Promise<void> {
       currentSceneId: sceneEntry?.id ?? sceneRef,
       onStart: (sceneId) => {
         if (sceneId !== (sceneEntry?.id ?? sceneRef)) {
-          try {
-            sessionStorage.setItem(AUTOSTART_KEY, '1');
-          } catch {
-            /* ignore */
-          }
-          const url = new URL(location.href);
-          url.searchParams.set('scene', sceneId);
-          location.assign(url.toString());
+          switchScene(sceneId);
           return;
         }
         intro.close();

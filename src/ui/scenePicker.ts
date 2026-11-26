@@ -1,4 +1,5 @@
 import type { SceneManifest } from '../scenes/manifest';
+import { switchScene } from './autostart';
 
 /**
  * A small always-visible dropdown (top-right) to switch scenes. Switching reloads the page with
@@ -35,11 +36,7 @@ export class ScenePicker {
       this.select.appendChild(el);
     }
     this.select.title = 'Scene';
-    this.select.addEventListener('change', () => {
-      const url = new URL(location.href);
-      url.searchParams.set('scene', this.select.value);
-      location.assign(url.toString());
-    });
+    this.select.addEventListener('change', () => switchScene(this.select.value));
     parent.appendChild(this.select);
   }
 }

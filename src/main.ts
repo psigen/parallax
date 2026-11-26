@@ -217,6 +217,8 @@ async function main(): Promise<void> {
   // ?viewport=full assumes the viewport covers the whole display (exact in fullscreen, and the
   // only sane choice when the browser reports bogus screen metrics, e.g. headless).
   const viewportMode = params.get('viewport') ?? 'auto';
+  // ?hud=1 shows the HUD from the start (same as pressing `h`); it is hidden by default.
+  if (params.get('hud') === '1') hud.toggle();
   // ?glass=1 shows the screen-plane frame from the start (same as pressing `g`).
   app.glassFrame.visible = params.get('glass') === '1';
 

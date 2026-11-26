@@ -39,6 +39,7 @@ export class Hud {
       pointerEvents: 'none',
       whiteSpace: 'pre',
     } satisfies Partial<CSSStyleDeclaration>);
+    this.el.style.display = 'none';
     parent.appendChild(this.el);
   }
 

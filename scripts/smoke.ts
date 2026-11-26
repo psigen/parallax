@@ -14,7 +14,7 @@ import { resolve } from 'node:path';
 
 const CHROME = process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const PORT = 4173;
-const query = process.argv[2] ?? '?viewport=full';
+const query = process.argv[2] ?? '?viewport=full&hud=1';
 const seconds = Number(process.argv[3] ?? '12');
 const shot = process.argv[4] ?? 'smoke.png';
 

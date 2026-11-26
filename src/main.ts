@@ -176,7 +176,7 @@ async function main(): Promise<void> {
     }
     log('info', `[offset] ${why}: eye_offset_mm: [${rounded.join(', ')}]`);
   };
-  // `k` freezes the tracked eye so alignment tests are not disturbed by tracking jitter.
+  // `f` freezes the tracked eye so alignment tests are not disturbed by tracking jitter.
   let frozenEyeMm: Vec3 | undefined;
   // ?eye_offset=x,y,z overrides both config and stored values (e.g. 0,0,0 for a strict window).
   const offsetParam = params.get('eye_offset');

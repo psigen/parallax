@@ -58,7 +58,7 @@ export class CameraLighting {
     private readonly bounds: Box3,
     private readonly analysis: LightingAnalysisSource,
   ) {
-    // Disabled in config: still constructed so `i` can turn it on, but starts off.
+    // Disabled in config: still constructed so `l` can turn it on, but starts off.
     this.mode = !config.enabled ? 'off' : config.key_lights.enabled ? 'full' : 'environment';
     const kl = config.key_lights;
     this.brightness = new LinearSolidAngleModel(() => ({

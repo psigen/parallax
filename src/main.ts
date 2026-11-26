@@ -29,15 +29,20 @@ import { TuningPanel } from './ui/tuning';
 const WASM_PATH = '/mediapipe/wasm';
 const MODEL_PATH = '/models/face_landmarker.task';
 const focalKey = (cameraId: string) => `parallax.focal_px.${cameraId}`;
-const offsetKey = (cameraId: string) => `parallax.eye_offset_y_mm.${cameraId}`;
+const offsetKey = (cameraId: string) => `parallax.eye_offset_mm.${cameraId}`;
 
-function readOffsetYOverride(cameraId: string): number | undefined {
+function readOffsetOverride(cameraId: string): [number, number, number] | undefined {
   try {
     const v = localStorage.getItem(offsetKey(cameraId));
-    return v ? Number(v) : undefined;
+    if (!v) return undefined;
+    const arr: unknown = JSON.parse(v);
+    if (Array.isArray(arr) && arr.length === 3 && arr.every((n) => typeof n === 'number')) {
+      return arr as [number, number, number];
+    }
   } catch {
-    return undefined;
+    /* ignore */
   }
+  return undefined;
 }
 
 function readFocalOverride(cameraId: string): number | undefined {
@@ -157,8 +162,22 @@ async function main(): Promise<void> {
   // Constant added to every tracked eye position (zero = strict window). `o` re-zeroes only Y.
   const defaultOffset = (): Vec3 => v3(...config.viewer.eye_offset_mm);
   let eyeOffsetMm = defaultOffset();
-  const storedY = readOffsetYOverride(cameraId);
-  if (storedY !== undefined) eyeOffsetMm = v3(eyeOffsetMm.x, storedY, eyeOffsetMm.z);
+  const stored = readOffsetOverride(cameraId);
+  if (stored) eyeOffsetMm = v3(...stored);
+  // Empirical centre-of-projection calibration: arrow keys nudge the offset (see docs/calibration.md).
+  const storeOffset = (why: string): void => {
+    const rounded = [eyeOffsetMm.x, eyeOffsetMm.y, eyeOffsetMm.z].map(
+      (n) => Math.round(n * 10) / 10,
+    );
+    try {
+      localStorage.setItem(offsetKey(cameraId), JSON.stringify(rounded));
+    } catch {
+      /* ignore */
+    }
+    log('info', `[offset] ${why}: eye_offset_mm: [${rounded.join(', ')}]`);
+  };
+  // `k` freezes the tracked eye so alignment tests are not disturbed by tracking jitter.
+  let frozenEyeMm: Vec3 | undefined;
   // ?eye_offset=x,y,z overrides both config and stored values (e.g. 0,0,0 for a strict window).
   const offsetParam = params.get('eye_offset');
   if (offsetParam) {
@@ -167,7 +186,7 @@ async function main(): Promise<void> {
   }
   log(
     'info',
-    `[viewer] eye offset ${[eyeOffsetMm.x, eyeOffsetMm.y, eyeOffsetMm.z].map((n) => n.toFixed(1)).join(', ')} mm${storedY !== undefined ? ' (y stored)' : ''}`,
+    `[viewer] eye offset ${[eyeOffsetMm.x, eyeOffsetMm.y, eyeOffsetMm.z].map((n) => n.toFixed(1)).join(', ')} mm${stored ? ' (stored)' : ''}`,
   );
 
   // Rolling stats for the HUD.
@@ -183,9 +202,8 @@ async function main(): Promise<void> {
   const onSample = (s: EyeSample): void => {
     lastSample = s;
     sampleCount++;
-    const eyeMm = add(s.eyeMm, eyeOffsetMm);
-    eyeState.push({ ...s, eyeMm });
-    scope.pushRaw(s.tCaptureMs, eyeMm);
+    eyeState.push(s);
+    scope.pushRaw(s.tCaptureMs, s.eyeMm);
   };
   let trackerStatus = 'starting';
   let lighting: CameraLighting | undefined;
@@ -281,16 +299,7 @@ async function main(): Promise<void> {
           break;
         }
         eyeOffsetMm = v3(eyeOffsetMm.x, eyeOffsetMm.y - cur.y, eyeOffsetMm.z);
-        const rounded = [eyeOffsetMm.x, eyeOffsetMm.y, eyeOffsetMm.z].map((n) => Math.round(n));
-        try {
-          localStorage.setItem(offsetKey(cameraId), String(rounded[1]));
-        } catch {
-          /* ignore */
-        }
-        log(
-          'info',
-          `[offset] eye offset y set so the current position reads y 0. Paste into config: eye_offset_mm: [${rounded.join(', ')}]`,
-        );
+        storeOffset('y re-zeroed at the current position');
         break;
       }
       case 'O':
@@ -300,8 +309,42 @@ async function main(): Promise<void> {
           /* ignore */
         }
         eyeOffsetMm = defaultOffset();
-        log('info', '[offset] cleared stored eye offset y; using the default');
+        log('info', '[offset] cleared the stored eye offset; using the config value');
         break;
+      case 'ArrowLeft':
+      case 'ArrowRight':
+      case 'ArrowUp':
+      case 'ArrowDown':
+      case '[':
+      case ']': {
+        // Nudge the centre of projection: 1 mm per press, 10 mm with Shift ([ ] move z by 10/50).
+        const step = e.shiftKey ? 10 : 1;
+        const dz = (e.key === ']' ? 1 : e.key === '[' ? -1 : 0) * (e.shiftKey ? 50 : 10);
+        const dx = e.key === 'ArrowRight' ? step : e.key === 'ArrowLeft' ? -step : 0;
+        const dy = e.key === 'ArrowUp' ? step : e.key === 'ArrowDown' ? -step : 0;
+        eyeOffsetMm = v3(eyeOffsetMm.x + dx, eyeOffsetMm.y + dy, eyeOffsetMm.z + dz);
+        storeOffset('nudged');
+        e.preventDefault();
+        break;
+      }
+      case 'k': {
+        if (frozenEyeMm) {
+          frozenEyeMm = undefined;
+          log('info', '[eye] tracking resumed');
+        } else {
+          const cur = eyeState.raw?.position;
+          if (!cur) {
+            warn('[eye] no tracked eye to freeze');
+            break;
+          }
+          frozenEyeMm = v3(cur.x, cur.y, cur.z);
+          log(
+            'info',
+            `[eye] frozen at ${[cur.x, cur.y, cur.z].map((n) => n.toFixed(0)).join(', ')} mm (raw, before offset changes)`,
+          );
+        }
+        break;
+      }
       case 'c': {
         if (!mpTracker) break;
         const answer = window.prompt(
@@ -383,7 +426,8 @@ async function main(): Promise<void> {
     lastFrameMs = tFrameMs;
 
     const tDisplayMs = tFrameMs + frameIntervalMs;
-    const eyeMm = eyeState.eyeAt(tDisplayMs);
+    // Offset is applied here (not to samples) so nudges and the freeze act immediately.
+    const eyeMm = add(frozenEyeMm ?? eyeState.eyeAt(tDisplayMs), eyeOffsetMm);
     const gain = config.tracking.parallax_gain;
     const eyeRenderMm = gain === 1 ? eyeMm : v3(eyeMm.x * gain, eyeMm.y * gain, eyeMm.z);
 
@@ -421,9 +465,10 @@ async function main(): Promise<void> {
     }
     const raw = eyeState.raw;
     hud.update({
-      trackerName: `${tracker.name}${mpTracker?.delegate ? ` (${mpTracker.delegate})` : ''} [${trackerStatus}]`,
+      trackerName: `${tracker.name}${mpTracker?.delegate ? ` (${mpTracker.delegate})` : ''} [${trackerStatus}]${frozenEyeMm ? ' [FROZEN k]' : ''}`,
       tracking: eyeState.tracking,
       eyeMm,
+      eyeOffsetMm,
       renderFps,
       sampleHz,
       trackerLatencyMs: lastSample ? lastSample.tReadyMs - lastSample.tCaptureMs : 0,

@@ -104,6 +104,25 @@ lateral position.
   amount with the offset at zero, adjust `extrinsics.position_mm` (the vanishing point moves 1:1
   with the eye estimate).
 
+## Empirical centre of projection
+
+The renderer's eye point is the tracked iris centre plus `eye_offset_mm`. The true centre of
+projection is the eye's entrance pupil, which should coincide with the tracked point to about a
+millimetre, but that is a claim to measure, not assume. Procedure:
+
+1. Set up the parallels test, one eye, `w` on. Press `k` to freeze the tracked eye so jitter
+   does not move the vanishing point while you sight.
+2. Nudge the eye point with the arrow keys (1 mm; Shift for 10 mm) and `[` / `]` for depth
+   (10 mm; Shift for 50 mm) until the virtual floor lines run into the real edges. The HUD
+   `eye` line shows the offset; it is stored per camera and printed as a YAML line.
+3. Press `k` again, move to a clearly different distance, and repeat.
+
+Interpretation: an offset that is the same at both distances is a real bias between the tracked
+point and the effective pupil (or in the camera's `position_mm`); keep it in the config. An
+offset that grows with distance is angular: camera `rotation_deg`, or perception rather than
+geometry (compare with a phone photographed from the eye position, which has no perception).
+A depth nudge changes foreshortening (how fast tiles shrink), never the vanishing point.
+
 ## The ruler-on-screen test (objective)
 
 Mark where an object appears on the screen, move your head a measured `Δx` sideways, mark again,

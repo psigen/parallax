@@ -9,7 +9,7 @@ interface Point {
 /**
  * Strip chart of the tracked eye over the last few seconds: raw samples (dots) versus the eye
  * actually rendered after filtering and prediction (line). Shows lag (line trailing the dots),
- * overshoot (line crossing ahead), jitter (dot scatter at rest) and dropouts (gaps). Key `t`.
+ * overshoot (line crossing ahead), jitter (dot scatter at rest) and dropouts (gaps). Key `s`.
  */
 export class TrackingScope {
   private readonly canvas: HTMLCanvasElement;

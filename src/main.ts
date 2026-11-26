@@ -156,7 +156,7 @@ async function main(): Promise<void> {
   // ?viewport=full assumes the viewport covers the whole display (exact in fullscreen, and the
   // only sane choice when the browser reports bogus screen metrics, e.g. headless).
   const viewportMode = params.get('viewport') ?? 'auto';
-  // ?glass=1 shows the screen-plane frame from the start (same as pressing `w`).
+  // ?glass=1 shows the screen-plane frame from the start (same as pressing `g`).
   app.glassFrame.visible = params.get('glass') === '1';
 
   // Constant added to every tracked eye position (zero = strict window). `o` re-zeroes only Y.
@@ -256,23 +256,23 @@ async function main(): Promise<void> {
       case 'h':
         hud.toggle();
         break;
-      case 'm':
+      case 'r':
         ruler.toggle();
         break;
       case 'd':
         debugView.toggle();
         break;
-      case 'g':
+      case 't':
         tuning.toggle();
         break;
-      case 't':
+      case 's':
         scope.toggle();
         break;
-      case 'i':
+      case 'l':
         if (lighting) log('info', `[lighting] mode ${lighting.cycleMode()}`);
         else warn('[lighting] needs the camera tracker');
         break;
-      case 'w':
+      case 'g':
         app.glassFrame.visible = !app.glassFrame.visible;
         break;
       case 'p': {
@@ -284,11 +284,11 @@ async function main(): Promise<void> {
         );
         break;
       }
-      case 'f':
+      case 'F':
         if (document.fullscreenElement) void document.exitFullscreen();
         else void document.documentElement.requestFullscreen();
         break;
-      case 'r':
+      case 'R':
         eyeState.setConfig(config.tracking);
         break;
       case 'o': {
@@ -327,7 +327,7 @@ async function main(): Promise<void> {
         e.preventDefault();
         break;
       }
-      case 'k': {
+      case 'f': {
         if (frozenEyeMm) {
           frozenEyeMm = undefined;
           log('info', '[eye] tracking resumed');
@@ -370,7 +370,7 @@ async function main(): Promise<void> {
         }
         break;
       }
-      case 'x':
+      case 'C':
         try {
           localStorage.removeItem(focalKey(cameraId));
           log('info', '[calibrate] cleared stored focal length; reload to use the config value');

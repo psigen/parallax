@@ -7,7 +7,7 @@ import type { ScreenRect } from '../math/offAxisProjection';
  * eye moves; if this frame drifts, the viewport-to-physical mapping or the projection is wrong.
  * A small diamond marks the vanishing point of lines parallel to the screen normal: the foot of
  * the eye on the glass. Real-world lines running straight into the screen must converge there.
- * Key `w`, or `?glass=1`.
+ * Key `g`, or `?glass=1`.
  */
 export class GlassFrame extends LineSegments {
   constructor() {

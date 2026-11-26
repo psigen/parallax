@@ -62,7 +62,7 @@ export class Hud {
       `camera    ${s.camera}`,
       `lighting  ${s.lighting}`,
       ...s.warnings.map((w) => `log       ${w}`),
-      `keys      h hud  d debug  t scope  w glass  i lighting  g tuning  m ruler  f fullscreen  c calibrate  x clear-cal  o zero-y  O clear-offset  arrows/[ ] nudge  k freeze  p snapshot  r reset`,
+      `keys      h hud  d debug  s scope  g glass  l lighting  t tuning  r ruler  p snapshot  c calibrate  C clear-cal  o zero-y  O clear-offset  arrows/[ ] nudge  f freeze  F fullscreen  R reset-filter`,
     ];
     this.el.textContent = lines.join('\n');
   }

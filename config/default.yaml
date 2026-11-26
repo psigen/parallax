@@ -102,7 +102,7 @@ rendering:
 
 lighting:
   # Use the webcam image as the light entering through the window (docs/lighting.md).
-  # Off by default for now; press `i` to turn it on at runtime (shadows need enabled: true at load).
+  # Off by default for now; press `l` to turn it on at runtime (shadows need enabled: true at load).
   enabled: false
   # Multiplier on lights authored in the glTF when camera lighting is on.
   scene_lights_scale: 1.0

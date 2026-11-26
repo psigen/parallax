@@ -25,7 +25,7 @@ Sit with your eyes a measured distance from the screen surface (a tape measure t
 the nose; 500 mm is convenient), look straight at the camera, and press `c`. Enter the distance
 in mm. The app solves `fx = d_px · distance / IPD` from the current iris separation, applies it
 immediately, stores it in `localStorage` for this camera id, and prints the values to paste into
-the YAML. `x` clears the stored value. Repeat at two distances; if the results differ by more
+the YAML. `C` clears the stored value. Repeat at two distances; if the results differ by more
 than a few percent, the camera is probably reframing (see above) or the IPD is off.
 
 A sanity check: after calibration the `depth` in the debug view (`d`) should track a tape measure
@@ -41,8 +41,8 @@ Then work through these, in order; each isolates one factor.
    a measured 300 mm and 700 mm. The `depth` readout should match within ~5 %. If it drifts
    more, suspect: Center Stage/zoom reframing (watch the preview: does the crop change?), an IPD
    that is not yours, or large head yaw (the `yaw` readout should be near 0° when facing the
-   camera; toggle `yaw correction` in the tuning panel (`g`) and see if depth becomes stable).
-2. **Is the viewport mapping right?** `m` draws a 100 mm square; measure it. Compare the
+   camera; toggle `yaw correction` in the tuning panel (`t`) and see if depth becomes stable).
+2. **Is the viewport mapping right?** `r` draws a 100 mm square; measure it. Compare the
    `browser` HUD line in fullscreen: on a 14-inch MacBook Pro at default scaling, `inner` should
    be 1512 wide. If the browser leaves a band for the notch, `inner` height is less than
    `screen` height and the window is shifted down; the mapping handles that only if
@@ -79,7 +79,7 @@ flat display's stereo cue is winning. Separate them objectively:
    object a few metres behind the laptop (a door frame, a wall corner) and move your head. The
    two should stay together; the 0.3 m post should swing against you. If the 30 m bar outruns
    the real object, the scale is exaggerated; measure step 1.
-3. Close one eye (and set `render for` to that eye in `g`). If far markers now hold still,
+3. Close one eye (and set `render for` to that eye in `t`). If far markers now hold still,
    the geometry is right and the two-eyed impression was the stereo conflict.
 
 ## The parallels test (vanishing point)
@@ -99,7 +99,7 @@ lateral position.
   the eye's position, or look through a ~1.5 mm pinhole. If the photo (or the pinhole view)
   shows the families converging together, the geometry is right and the disagreement is the
   picture-surface effect described in [lessons-learned.md](lessons-learned.md).
-- Press `w`: the diamond on the glass-plane frame marks the vanishing point the renderer is
+- Press `g`: the diamond on the glass-plane frame marks the vanishing point the renderer is
   using. Sight along a real edge; it should point at the diamond. If it misses by a constant
   amount with the offset at zero, adjust `extrinsics.position_mm` (the vanishing point moves 1:1
   with the eye estimate).
@@ -110,12 +110,12 @@ The renderer's eye point is the tracked iris centre plus `eye_offset_mm`. The tr
 projection is the eye's entrance pupil, which should coincide with the tracked point to about a
 millimetre, but that is a claim to measure, not assume. Procedure:
 
-1. Set up the parallels test, one eye, `w` on. Press `k` to freeze the tracked eye so jitter
+1. Set up the parallels test, one eye, `g` on. Press `f` to freeze the tracked eye so jitter
    does not move the vanishing point while you sight.
 2. Nudge the eye point with the arrow keys (1 mm; Shift for 10 mm) and `[` / `]` for depth
    (10 mm; Shift for 50 mm) until the virtual floor lines run into the real edges. The HUD
    `eye` line shows the offset; it is stored per camera and printed as a YAML line.
-3. Press `k` again, move to a clearly different distance, and repeat.
+3. Press `f` again, move to a clearly different distance, and repeat.
 
 Interpretation: an offset that is the same at both distances is a real bias between the tracked
 point and the effective pupil (or in the camera's `position_mm`); keep it in the config. An
@@ -158,7 +158,7 @@ offset points at `extrinsics.position_mm`; an offset that grows with distance po
 
 ## Viewport placement
 
-Press `m` to draw a 100 mm square. Measure it. If it is wrong, the browser's reported screen
+Press `r` to draw a 100 mm square. Measure it. If it is wrong, the browser's reported screen
 metrics do not match the config's `width_mm`; in fullscreen use `?viewport=full`, windowed use
 `screen.viewport_override_mm`.
 

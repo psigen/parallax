@@ -39,14 +39,29 @@ function githubToken(): string | undefined {
 const RELEASE_URL =
   /^https:\/\/github\.com\/([^/]+)\/([^/]+)\/releases\/download\/([^/]+)\/([^/?#]+)$/;
 
+/** "owner/repo" of this repository: GITHUB_REPOSITORY in Actions, else the git origin remote. */
+function thisRepository(): string | undefined {
+  if (process.env.GITHUB_REPOSITORY) return process.env.GITHUB_REPOSITORY.toLowerCase();
+  try {
+    const remote = execSync('git remote get-url origin', { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim();
+    const m = /github\.com[/:]([^/]+)\/([^/]+?)(?:\.git)?$/.exec(remote);
+    return m ? `${m[1]}/${m[2]}`.toLowerCase() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /**
- * Download a URL. GitHub release assets always go through the API with a token (the same path
- * works for public and private repositories: GITHUB_TOKEN in CI, the `gh` login locally);
- * other URLs are fetched directly.
+ * Download a URL. Release assets of THIS repository go through the GitHub API with a token
+ * (the same path works whether the repository is public or private: GITHUB_TOKEN in CI, the
+ * `gh` login locally). Every other URL, including other GitHub repositories, is fetched directly.
  */
 async function download(url: string): Promise<Response> {
   const m = RELEASE_URL.exec(url);
-  if (!m) return fetch(url, { redirect: 'follow' });
+  const ours = m && `${m[1]}/${m[2]}`.toLowerCase() === thisRepository();
+  if (!m || !ours) return fetch(url, { redirect: 'follow' });
   const [, owner, repo, tag, name] = m;
   const token = githubToken();
   if (!token)

@@ -27,7 +27,7 @@ export class IntroOverlay {
       backdropFilter: 'blur(14px) saturate(1.1)',
       WebkitBackdropFilter: 'blur(14px) saturate(1.1)',
       zIndex: '20',
-      font: '15px/1.5 ui-sans-serif, system-ui, -apple-system, sans-serif',
+      font: '400 15px/1.55 -apple-system, "SF Pro Text", Inter, "Helvetica Neue", Helvetica, Arial, sans-serif',
       color: '#eef',
     } satisfies Partial<CSSStyleDeclaration & { WebkitBackdropFilter: string }>);
 
@@ -45,18 +45,20 @@ export class IntroOverlay {
     const h1 = document.createElement('h1');
     h1.textContent = 'Parallax Window';
     Object.assign(h1.style, {
-      margin: '0 0 10px',
-      font: '600 26px/1.2 inherit',
-      letterSpacing: '0.2px',
+      margin: '0 0 14px',
+      font: '500 26px/1.2 inherit',
+      letterSpacing: '0.3px',
+      textAlign: 'center',
     });
 
     const p = document.createElement('p');
     p.innerHTML =
-      'Your screen becomes a window into a 3D scene. The webcam tracks your eyes and the view is ' +
-      'redrawn with the exact perspective for where you are, so moving your head reveals the scene ' +
-      'behind the glass the way a real window would. Sit about half a metre back; it works best with ' +
-      'one eye closed, and nothing leaves your machine.';
-    Object.assign(p.style, { margin: '0 0 18px', color: '#cfd6e6' });
+      'Hi! This is a little experiment in making your screen feel like a window. If you let it use ' +
+      'your webcam, it keeps an eye on where you are and redraws the scene from your point of view, so ' +
+      'when you lean or move your head, the room behind the glass shifts the way a real one would. ' +
+      "It's easiest to see with one eye closed and from about an arm's length away. Everything stays " +
+      'on your computer; the video never goes anywhere.';
+    Object.assign(p.style, { margin: '0 0 20px', color: '#d6dcea' });
 
     const row = document.createElement('div');
     Object.assign(row.style, {
@@ -101,8 +103,9 @@ export class IntroOverlay {
 
     const hint = document.createElement('p');
     hint.innerHTML =
-      'Starting asks for the webcam. Press <kbd>h</kbd> for the diagnostics HUD, <kbd>F</kbd> for ' +
-      'fullscreen; the dropdown in the top-right corner switches scenes later.';
+      "Pick a scene and press Start; your browser will ask about the camera. If you're curious what's " +
+      'going on under the hood, <kbd>h</kbd> shows the numbers and <kbd>F</kbd> goes fullscreen. You ' +
+      'can change scenes any time from the menu in the top-right corner.';
     Object.assign(hint.style, { margin: '16px 0 0', fontSize: '13px', color: '#9aa5bd' });
     for (const kbd of hint.querySelectorAll('kbd')) {
       Object.assign(kbd.style, {

@@ -10,7 +10,7 @@
 
 scenes:
   - id: room
-    name: Checkerboard box (bundled)
+    name: Checkerboard box (default)
     kind: gltf
     url: /scenes/room.glb
 

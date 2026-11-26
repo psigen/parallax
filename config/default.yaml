@@ -60,9 +60,12 @@ rendering:
   # file (.spz/.sog/.ply/.splat/.ksplat). ?scene=<id|url> overrides. Scenes without a `window`
   # node are positioned by their manifest `placement`; override fields here, e.g.
   # placement: { scale: 0.1667 } for a room at 1/6 size (docs/scene-authoring.md).
-  scene: apartment
+  scene: room
   near_mm: 10
   far_mm: 20000
+  # Gaussian splats are fill-rate bound: cap the device pixel ratio for splat scenes (1 = render
+  # at CSS resolution). glTF scenes render at up to 2x.
+  splat_pixel_ratio: 1
 
 lighting:
   # Use the webcam image as the light entering through the window (docs/lighting.md).

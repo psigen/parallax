@@ -35,6 +35,7 @@ import {
 } from './scenes/manifest';
 import { placementMatrix, placementYaml } from './scenes/placement';
 import { CreditOverlay } from './ui/credit';
+import { ScenePicker } from './ui/scenePicker';
 import { Box3, type Group } from 'three';
 import { EyeState } from './tracking/eyeState';
 import { MediapipeTracker } from './tracking/mediapipeTracker';
@@ -90,13 +91,14 @@ async function main(): Promise<void> {
   const sceneRef = sceneParam ?? config.rendering.scene;
   const sceneEntry: SceneEntry | undefined =
     sceneRef === 'reference' ? undefined : resolveSceneRef(sceneRef, manifest);
-  const app = new App(
-    container,
-    mmToM(config.rendering.near_mm),
-    mmToM(config.rendering.far_mm),
-    sceneEntry?.kind !== 'splat',
-  );
+  const isSplat = sceneEntry?.kind === 'splat';
+  const app = new App(container, mmToM(config.rendering.near_mm), mmToM(config.rendering.far_mm), {
+    antialias: !isSplat,
+    // Splats are fill-rate bound: render them at a lower pixel ratio (config) than the glTF scenes.
+    maxPixelRatio: isSplat ? config.rendering.splat_pixel_ratio : 2,
+  });
   const credit = new CreditOverlay(container);
+  new ScenePicker(container, manifest, sceneRef);
   const hud = new Hud(container);
   const ruler = new RulerOverlay(container);
   const debugView = new DebugView(container);

@@ -152,6 +152,8 @@ export const configSchema = z
         .optional(),
       near_mm: z.number().positive(),
       far_mm: z.number().positive(),
+      /** Device pixel ratio cap for Gaussian splat scenes (fill-rate bound); glTF scenes use up to 2. */
+      splat_pixel_ratio: z.number().positive().max(3).default(1),
     }),
     lighting: lightingSchema.prefault({}),
   })

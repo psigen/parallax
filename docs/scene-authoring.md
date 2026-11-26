@@ -53,7 +53,10 @@ interesting volume sits behind z = 0 (negative z), typically with the nearest su
 ## Gaussian splat scenes
 
 Rendered with [Spark](https://sparkjs.dev) (`@sparkjsdev/spark`, MIT), loaded lazily only when
-a splat scene is selected (about 3 MB). Spark projects splat centres with the camera's full
+a splat scene is selected (about 3 MB). Splats are fill-rate bound: `rendering.splat_pixel_ratio`
+(default 1) caps the device pixel ratio for splat scenes, and MSAA is off; expect a 2–3 M splat
+scene to cost far more than the glTF box, especially with tracking running, which is why the box
+stays the default and the dropdown (top-right) selects the others. Spark projects splat centres with the camera's full
 projection matrix and takes the splat footprint from its diagonal terms; for our off-axis
 `frustum()` matrix the shear terms are constants that vanish in the Jacobian, so the window
 projection is exact and `OffAxisCamera` needs no changes. Sorting is radial (by distance from

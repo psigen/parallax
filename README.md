@@ -17,9 +17,10 @@ npm install
 npm run dev            # http://localhost:5173
 ```
 
-The page asks for the webcam and starts tracking. Sit about half a metre from the screen. The
-dropdown in the top-right corner switches scenes (the checkerboard box is the default; the
-raccoon family is a Gaussian splat).
+A landing dialog explains the demo, lets you pick a scene and starts tracking (the webcam is
+requested only when you press Start). Sit about half a metre from the screen. The dropdown in
+the top-right corner switches scenes later (the checkerboard box is the default; the raccoon
+family is a Gaussian splat). `?intro=0` skips the dialog.
 
 - On macOS, turn **Center Stage off** and zoom to **1x** in the Video menu (menu-bar camera icon
   while the page uses the camera); otherwise the camera intrinsics drift at runtime.
@@ -48,7 +49,7 @@ raccoon family is a Gaussian splat).
 
 URL parameters: `?tracker=mouse` (drive the eye with the mouse, wheel for distance),
 `?tracker=static&eye=250,0,550` (fixed eye), `?camera=mx-brio` (a camera id from the config),
-`?viewport=full` (assume the viewport is the whole display), `?hud=1` (show the HUD at load), `?blink=0` (disable blink holding for comparison), `?device=<screen id>` (force an index entry), `?screen_mm=WxH` (pin the display size), `?eye_offset=0,0,0` (override the eye offset; zero = strict window), `?lighting=off|environment|full` (camera lighting mode at start), `?scene=racoon` (a Gaussian splat from the manifest; `?scene_scale=`, `?scene_pos=x,y,z`, `?scene_rot=` place it), `?scene=reference` (depth markers
+`?viewport=full` (assume the viewport is the whole display), `?intro=0` (skip the landing dialog), `?hud=1` (show the HUD at load), `?blink=0` (disable blink holding for comparison), `?device=<screen id>` (force an index entry), `?screen_mm=WxH` (pin the display size), `?eye_offset=0,0,0` (override the eye offset; zero = strict window), `?lighting=off|environment|full` (camera lighting mode at start), `?scene=racoon` (a Gaussian splat from the manifest; `?scene_scale=`, `?scene_pos=x,y,z`, `?scene_rot=` place it), `?scene=reference` (depth markers
 out to 30 m for checking parallax against real objects) or `?scene=<url>` (another glTF).
 
 The display and camera are detected at startup (screen size, pixel ratio, platform, GPU and

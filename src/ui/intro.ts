@@ -27,7 +27,7 @@ export class IntroOverlay {
       backdropFilter: 'blur(14px) saturate(1.1)',
       WebkitBackdropFilter: 'blur(14px) saturate(1.1)',
       zIndex: '20',
-      font: '400 15px/1.55 -apple-system, "SF Pro Text", Inter, "Helvetica Neue", Helvetica, Arial, sans-serif',
+      font: '400 15px/1.55 var(--font-ui)',
       color: '#eef',
     } satisfies Partial<CSSStyleDeclaration & { WebkitBackdropFilter: string }>);
 

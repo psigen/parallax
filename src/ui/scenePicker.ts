@@ -19,7 +19,7 @@ export class ScenePicker {
       color: '#ddd',
       border: '1px solid #555',
       borderRadius: '4px',
-      font: '12px ui-sans-serif, system-ui, sans-serif',
+      font: '12px var(--font-ui)',
       zIndex: '10',
     } satisfies Partial<CSSStyleDeclaration>);
     const options = [

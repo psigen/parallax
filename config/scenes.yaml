@@ -33,7 +33,7 @@ scenes:
     # Hosted as a release asset (never committed): `gh release create assets-v1 apartment.sog`.
     # Reduce to ~2 M splats and crop in the SuperSplat editor before uploading (5 M / 63 MB as published).
     url: https://github.com/psigen/parallax/releases/download/assets-v1/apartment.sog
-    # sha256: <printed by `npm run fetch:scenes` after the first download; add it here>
+    sha256: 7a3be14b7d5517cc7ad78a1d594920400e83620942f8be7d4722fea130560d5e
     license: CC BY 4.0
     credit: '"Apartment_SH3" by milanoski — CC BY 4.0, via superspl.at'
     source_url: https://superspl.at/scene/1e56ea8e

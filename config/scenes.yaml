@@ -27,17 +27,18 @@ scenes:
       rotation_deg: [0, 0, 0]
       position_mm: [0, -80, -350]
 
-  - id: bar
-    name: Bar (MipMap)
+  - id: apartment
+    name: Apartment_SH3
     kind: splat
-    # Hosted as a release asset (never committed): `gh release create assets-v1 bar.sog`.
-    url: https://github.com/psigen/parallax/releases/download/assets-v1/bar.sog
+    # Hosted as a release asset (never committed): `gh release create assets-v1 apartment.sog`.
+    # Reduce to ~2 M splats and crop in the SuperSplat editor before uploading (5 M / 63 MB as published).
+    url: https://github.com/psigen/parallax/releases/download/assets-v1/apartment.sog
     # sha256: <printed by `npm run fetch:scenes` after the first download; add it here>
     license: CC BY 4.0
-    credit: '"Bar (MipMap)" by ethan3111 — CC BY 4.0, via superspl.at'
-    source_url: https://superspl.at/scene/c491d277
+    credit: '"Apartment_SH3" by milanoski — CC BY 4.0, via superspl.at'
+    source_url: https://superspl.at/scene/1e56ea8e
     placement:
-      # 1/6 scale: the bar becomes a diorama about half a metre deep behind the glass.
+      # 1/6 scale: the studio becomes a diorama roughly half a metre deep behind the glass.
       scale: 0.1667
       rotation_deg: [0, 0, 0]
       position_mm: [0, -100, -250]

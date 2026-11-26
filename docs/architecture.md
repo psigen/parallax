@@ -32,6 +32,8 @@ between camera samples and hides capture latency.
 ```
 config/default.yaml       tuning parameters + device section (auto by default; docs/devices.md)
 config/devices.yaml       index of known displays and cameras (data only)
+config/scenes.yaml        scene manifest: glTF and Gaussian splat scenes, placement, credits
+src/scenes/               manifest schema, placement transform
 src/config/               zod schema + YAML loader
 src/math/                 pure, renderer-independent math (fully unit tested)
   offAxisProjection.ts    off-axis frustum + Kooima general form
@@ -40,11 +42,12 @@ src/math/                 pure, renderer-independent math (fully unit tested)
   oneEuro.ts, predictor.ts
 src/device/               display/camera auto-detection: observation → heuristics (the only guessing code) → resolve
 src/tracking/             camera source, MediaPipe worker, Tracker interface, mouse tracker
-src/render/               OffAxisCamera, glTF scene loader, render loop
+src/render/               OffAxisCamera, scene dispatcher (glTF loader, Spark splat loader), render loop
 src/lighting/             webcam -> environment map + key lights (docs/lighting.md)
 src/ui/                   HUD, debug overlay, key bindings
 scripts/build-room.ts     generates public/scenes/room.glb
 scripts/smoke.ts          headless Chrome end-to-end boot check with a fake camera (npm run smoke)
+scripts/fetch-scenes.ts   downloads external scene assets listed in the manifest (npm run fetch:scenes)
 public/models/            vendored face_landmarker.task (Apache-2.0)
 tests/                    Vitest suites (Node, no browser)
 docs/                     this documentation

@@ -19,6 +19,7 @@ export interface HudStats {
   camera: string;
   lighting: string;
   device: string;
+  scene: string;
   warnings: string[];
 }
 
@@ -64,6 +65,7 @@ export class Hud {
       `camera    ${s.camera}`,
       `lighting  ${s.lighting}`,
       `device    ${s.device}`,
+      `scene     ${s.scene}`,
       ...s.warnings.map((w) => `log       ${w}`),
       `keys      h hud  d debug  s scope  g glass  l lighting  t tuning  r ruler  p snapshot  c calibrate  C clear-cal  o zero-y  O clear-offset  D screen-label  arrows/[ ] nudge  f freeze  F fullscreen  R reset-filter`,
     ];

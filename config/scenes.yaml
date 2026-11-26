@@ -1,0 +1,28 @@
+# Scene manifest. Scenes are referenced by id (`rendering.scene` in default.yaml, or ?scene=<id>).
+# External assets are never committed: `npm run fetch:scenes` downloads them into public/scenes/
+# (verifying sha256 when given) before a build. Credit lines are shown on screen for scenes that
+# require attribution (CC BY).
+#
+# placement (screen frame; applied to scenes that have no `window` camera node):
+#   scale         uniform; 0.1667 shows a room at 1/6 size, a diorama behind the glass
+#   rotation_deg  pitch, yaw, roll applied after the loader's own up-axis handling
+#   position_mm   where the scene's origin sits (negative z is behind the glass)
+
+scenes:
+  - id: room
+    name: Checkerboard box (default)
+    kind: gltf
+    url: /scenes/room.glb
+
+  - id: racoon
+    name: Raccoon family (Niantic spz sample)
+    kind: splat
+    url: https://github.com/nianticlabs/spz/raw/main/samples/racoonfamily.spz
+    sha256: 2e068d893730955c09aee324ff170c559f71c0e8758c1b14c3811a5969333cfe
+    license: MIT
+    credit: '"Raccoon family" sample from the Niantic spz repository (MIT)'
+    source_url: https://github.com/nianticlabs/spz/tree/main/samples
+    placement:
+      scale: 0.2
+      rotation_deg: [0, 0, 0]
+      position_mm: [0, -80, -350]

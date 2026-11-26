@@ -1,6 +1,19 @@
-import { AmbientLight, Box3, DirectionalLight, Group, Light, Mesh, Vector3 } from 'three';
+import {
+  AmbientLight,
+  Box3,
+  DirectionalLight,
+  Group,
+  Light,
+  Mesh,
+  Scene,
+  Vector3,
+  WebGLRenderer,
+} from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { IDENTITY_PLACEMENT, type Placement, type SceneEntry } from '../scenes/manifest';
+import { placementMatrix } from '../scenes/placement';
 import { findWindowCamera, hasNonUnitScale, windowRootMatrix } from './sceneRoot';
+import { loadSplat } from './splatLoader';
 
 export interface SceneWarning {
   code: 'no-window-camera' | 'window-scale' | 'not-crossing-screen' | 'not-metric' | 'no-lights';
@@ -9,9 +22,12 @@ export interface SceneWarning {
 
 export interface LoadedScene {
   root: Group;
-  /** Bounds in the screen frame (metres), after re-rooting. */
+  /** Bounds in the screen frame (metres), after re-rooting / placement. */
   bounds: Box3;
   warnings: SceneWarning[];
+  /** The group whose transform is the placement (absent when a `window` node fixed the pose). */
+  placementGroup: Group | undefined;
+  splatCount?: number;
 }
 
 export interface LoadSceneOptions {
@@ -19,6 +35,39 @@ export interface LoadSceneOptions {
   lightsScale?: number;
   /** Mark every mesh to cast and receive shadows. */
   shadows?: boolean;
+  /** Applied to scenes without a `window` node (glTF) and to every splat. */
+  placement?: Placement;
+}
+
+/** Wrap a loaded scene in a group carrying the placement transform. */
+export function applyPlacement(inner: Group, placement: Placement): Group {
+  const group = new Group();
+  group.name = 'placement';
+  group.add(inner);
+  placementMatrix(placement).decompose(group.position, group.quaternion, group.scale);
+  group.updateMatrixWorld(true);
+  return group;
+}
+
+/** Load any manifest entry: glTF or Gaussian splat. */
+export async function loadSceneEntry(
+  entry: SceneEntry,
+  localUrl: string,
+  opts: LoadSceneOptions,
+  gl: { scene: Scene; renderer: WebGLRenderer },
+): Promise<LoadedScene> {
+  if (entry.kind === 'splat') {
+    const { root, bounds, splatCount } = await loadSplat(localUrl, gl.scene, gl.renderer);
+    const placementGroup = applyPlacement(root, opts.placement ?? IDENTITY_PLACEMENT);
+    return {
+      root: placementGroup,
+      bounds: bounds.clone().applyMatrix4(placementGroup.matrixWorld),
+      warnings: [],
+      placementGroup,
+      splatCount,
+    };
+  }
+  return loadScene(localUrl, opts);
 }
 
 /**
@@ -33,6 +82,7 @@ export async function loadScene(url: string, opts: LoadSceneOptions = {}): Promi
   root.add(gltf.scene);
   gltf.scene.updateMatrixWorld(true);
 
+  let placementGroup: Group | undefined;
   const windowCam = findWindowCamera(gltf.cameras);
   if (windowCam) {
     if (hasNonUnitScale(windowCam)) {
@@ -48,13 +98,14 @@ export async function loadScene(url: string, opts: LoadSceneOptions = {}): Promi
   } else {
     warnings.push({
       code: 'no-window-camera',
-      message:
-        'no camera named "window" in the glTF; assuming the scene origin is the display centre',
+      message: 'no camera named "window" in the glTF; the scene origin is placed by `placement`',
     });
+    placementGroup = applyPlacement(root, opts.placement ?? IDENTITY_PLACEMENT);
   }
-  root.updateMatrixWorld(true);
+  const outer = placementGroup ?? root;
+  outer.updateMatrixWorld(true);
 
-  const bounds = new Box3().setFromObject(root);
+  const bounds = new Box3().setFromObject(outer);
   const size = bounds.getSize(new Vector3());
   if (Math.max(size.x, size.y, size.z) > 50) {
     warnings.push({
@@ -92,5 +143,5 @@ export async function loadScene(url: string, opts: LoadSceneOptions = {}): Promi
   // A faint ambient keeps shadowed walls readable without washing out the lights.
   root.add(new AmbientLight(0xffffff, 0.25));
 
-  return { root, bounds, warnings };
+  return { root: outer, bounds, warnings, placementGroup };
 }

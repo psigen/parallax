@@ -1,5 +1,6 @@
 import defaultYaml from '../config/default.yaml?raw';
 import devicesYaml from '../config/devices.yaml?raw';
+import scenesYaml from '../config/scenes.yaml?raw';
 import { findCamera, mmToM, parseConfig } from './config/load';
 import type { ScreenConfig } from './config/schema';
 import { parseDeviceIndex } from './device/index';
@@ -24,8 +25,18 @@ import { add, scale, v3, type Vec3 } from './math/vec';
 import { CameraLighting } from './lighting/cameraLighting';
 import { App } from './render/app';
 import { buildReferenceScene } from './render/referenceScene';
-import { loadScene } from './render/sceneLoader';
-import { Box3 } from 'three';
+import { loadSceneEntry } from './render/sceneLoader';
+import {
+  localUrlFor,
+  parseSceneManifest,
+  resolveSceneRef,
+  type Placement,
+  type SceneEntry,
+} from './scenes/manifest';
+import { placementMatrix, placementYaml } from './scenes/placement';
+import { CreditOverlay } from './ui/credit';
+import { ScenePicker } from './ui/scenePicker';
+import { Box3, type Group } from 'three';
 import { EyeState } from './tracking/eyeState';
 import { MediapipeTracker } from './tracking/mediapipeTracker';
 import { MouseTracker } from './tracking/mouseTracker';
@@ -73,7 +84,21 @@ async function main(): Promise<void> {
   const container = document.getElementById('app');
   if (!container) throw new Error('#app missing');
 
-  const app = new App(container, mmToM(config.rendering.near_mm), mmToM(config.rendering.far_mm));
+  // Scene reference (manifest id or URL) is resolved before the renderer exists: splat scenes
+  // render without MSAA (Spark's recommendation; it only costs fill rate for splats).
+  const sceneParam = params.get('scene');
+  const manifest = parseSceneManifest(scenesYaml);
+  const sceneRef = sceneParam ?? config.rendering.scene;
+  const sceneEntry: SceneEntry | undefined =
+    sceneRef === 'reference' ? undefined : resolveSceneRef(sceneRef, manifest);
+  const isSplat = sceneEntry?.kind === 'splat';
+  const app = new App(container, mmToM(config.rendering.near_mm), mmToM(config.rendering.far_mm), {
+    antialias: !isSplat,
+    // Splats are fill-rate bound: render them at a lower pixel ratio (config) than the glTF scenes.
+    maxPixelRatio: isSplat ? config.rendering.splat_pixel_ratio : 2,
+  });
+  const credit = new CreditOverlay(container);
+  new ScenePicker(container, manifest, sceneRef);
   const hud = new Hud(container);
   const ruler = new RulerOverlay(container);
   const debugView = new DebugView(container);
@@ -91,38 +116,96 @@ async function main(): Promise<void> {
   };
 
   // ?scene=reference (depth markers to 30 m) or ?scene=<url> overrides the configured glTF.
-  const sceneParam = params.get('scene');
   const shadows = config.lighting.enabled && config.lighting.key_lights.shadows;
   if (shadows) app.enableShadows();
   let sceneBounds: Box3;
-  if (sceneParam === 'reference') {
+  // Placement: manifest defaults, then config overrides, then URL params (?scene_scale=,
+  // ?scene_pos=x,y,z, ?scene_rot=pitch,yaw,roll). Live-tunable in the panel (`t`).
+  const placement: Placement = {
+    ...(sceneEntry?.placement ?? { scale: 1, rotation_deg: [0, 0, 0], position_mm: [0, 0, 0] }),
+  };
+  const po = config.rendering.placement;
+  if (po?.scale !== undefined) placement.scale = po.scale;
+  if (po?.rotation_deg) placement.rotation_deg = [...po.rotation_deg];
+  if (po?.position_mm) placement.position_mm = [...po.position_mm];
+  const num3 = (v: string | null): [number, number, number] | undefined => {
+    const a = v?.split(',').map(Number);
+    return a?.length === 3 && a.every(Number.isFinite) ? [a[0]!, a[1]!, a[2]!] : undefined;
+  };
+  if (Number(params.get('scene_scale')) > 0) placement.scale = Number(params.get('scene_scale'));
+  const posParam = num3(params.get('scene_pos'));
+  if (posParam) placement.position_mm = posParam;
+  const rotParam = num3(params.get('scene_rot'));
+  if (rotParam) placement.rotation_deg = rotParam;
+  let placementGroup: Group | undefined;
+  let splatCount: number | undefined;
+  let shownEntry: SceneEntry | undefined = sceneEntry;
+
+  if (!sceneEntry) {
     const ref = buildReferenceScene(0.55, shadows);
     app.setSceneRoot(ref);
     sceneBounds = new Box3().setFromObject(ref);
   } else {
-    const {
-      root,
-      bounds,
-      warnings: sceneWarnings,
-    } = await loadScene(sceneParam ?? config.rendering.scene_url, {
+    const loadOpts = {
       lightsScale: config.lighting.enabled ? config.lighting.scene_lights_scale : 1,
       shadows,
-    });
-    for (const w of sceneWarnings) warn(`[scene] ${w.code}: ${w.message}`);
-    app.setSceneRoot(root);
-    sceneBounds = bounds;
+      placement,
+    };
+    const gl = { scene: app.scene, renderer: app.renderer };
+    let entryToShow: SceneEntry = sceneEntry;
+    let loaded;
+    try {
+      loaded = await loadSceneEntry(sceneEntry, localUrlFor(sceneEntry), loadOpts, gl);
+    } catch (err) {
+      // A missing or broken asset (e.g. not yet uploaded) must not blank the page.
+      warn(
+        `[scene] ${sceneEntry.id} failed to load (${err instanceof Error ? err.message : String(err)}); showing the bundled room`,
+      );
+      entryToShow = resolveSceneRef('room', manifest);
+      Object.assign(placement, entryToShow.placement);
+      loaded = await loadSceneEntry(entryToShow, localUrlFor(entryToShow), loadOpts, gl);
+    }
+    for (const w of loaded.warnings) warn(`[scene] ${w.code}: ${w.message}`);
+    app.setSceneRoot(loaded.root);
+    sceneBounds = loaded.bounds;
+    placementGroup = loaded.placementGroup;
+    splatCount = loaded.splatCount;
+    shownEntry = entryToShow;
+    credit.set(entryToShow.credit, entryToShow.source_url);
+    const b = loaded.bounds;
+    const mm = (n: number) => Math.round(n * 1000);
+    log(
+      'info',
+      `[scene] ${entryToShow.name} (${entryToShow.kind}${splatCount ? `, ${splatCount.toLocaleString()} splats` : ''})${placementGroup ? `; ${placementYaml(placement)}` : ''}; bounds mm x ${mm(b.min.x)}..${mm(b.max.x)} y ${mm(b.min.y)}..${mm(b.max.y)} z ${mm(b.min.z)}..${mm(b.max.z)}`,
+    );
   }
+  const applyPlacementLive = (): void => {
+    if (!placementGroup) return;
+    placementMatrix(placement).decompose(
+      placementGroup.position,
+      placementGroup.quaternion,
+      placementGroup.scale,
+    );
+    placementGroup.updateMatrixWorld(true);
+    log('info', `[scene] ${placementYaml(placement)}`);
+  };
 
   const [dx, dy, dz] = config.viewer.rest_eye_mm;
   const eyeState = new EyeState(config.tracking, v3(dx, dy, dz));
-  const tuning = new TuningPanel(config.tracking, config.lighting, (t) => {
-    eyeState.setConfig(t);
-    if (mpTracker) {
-      mpTracker.yawCorrection = t.yaw_correction;
-      mpTracker.eyeSelect = t.eye;
-    }
-    lighting?.syncParams();
-  });
+  const tuning = new TuningPanel(
+    config.tracking,
+    config.lighting,
+    placement,
+    applyPlacementLive,
+    (t) => {
+      eyeState.setConfig(t);
+      if (mpTracker) {
+        mpTracker.yawCorrection = t.yaw_correction;
+        mpTracker.eyeSelect = t.eye;
+      }
+      lighting?.syncParams();
+    },
+  );
   // ?diag=1 logs the first few tracker results in full (matrix included) for offline checking.
   let diagLeft = params.get('diag') ? 5 : 0;
 
@@ -581,6 +664,9 @@ async function main(): Promise<void> {
       camera: cameraLine(),
       lighting: lightingLine(),
       device: describeDevice(device),
+      scene: shownEntry
+        ? `${shownEntry.id} (${shownEntry.kind}${splatCount ? `, ${splatCount.toLocaleString()} splats` : ''})${placementGroup ? `  ${placementYaml(placement)}` : ''}`
+        : 'reference',
       warnings: messages,
     });
     requestAnimationFrame(frame);

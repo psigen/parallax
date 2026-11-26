@@ -1,4 +1,4 @@
-# parallax-demo
+# parallax
 
 A browser demo where the screen behaves like a physical window into a 3D scene. A webcam tracks
 the viewer's eyes; the renderer uses an off-axis perspective projection so the scene shows the
@@ -17,7 +17,9 @@ npm install
 npm run dev            # http://localhost:5173
 ```
 
-The page asks for the webcam and starts tracking. Sit about half a metre from the screen.
+The page asks for the webcam and starts tracking. Sit about half a metre from the screen. The
+dropdown in the top-right corner switches scenes (the checkerboard box is the default; the
+raccoon family is a Gaussian splat).
 
 - On macOS, turn **Center Stage off** and zoom to **1x** in the Video menu (menu-bar camera icon
   while the page uses the camera); otherwise the camera intrinsics drift at runtime.
@@ -46,7 +48,7 @@ The page asks for the webcam and starts tracking. Sit about half a metre from th
 
 URL parameters: `?tracker=mouse` (drive the eye with the mouse, wheel for distance),
 `?tracker=static&eye=250,0,550` (fixed eye), `?camera=mx-brio` (a camera id from the config),
-`?viewport=full` (assume the viewport is the whole display), `?hud=1` (show the HUD at load), `?device=<screen id>` (force an index entry), `?screen_mm=WxH` (pin the display size), `?eye_offset=0,0,0` (override the eye offset; zero = strict window), `?lighting=off|environment|full` (camera lighting mode at start), `?scene=reference` (depth markers
+`?viewport=full` (assume the viewport is the whole display), `?hud=1` (show the HUD at load), `?device=<screen id>` (force an index entry), `?screen_mm=WxH` (pin the display size), `?eye_offset=0,0,0` (override the eye offset; zero = strict window), `?lighting=off|environment|full` (camera lighting mode at start), `?scene=racoon` (a Gaussian splat from the manifest; `?scene_scale=`, `?scene_pos=x,y,z`, `?scene_rot=` place it), `?scene=reference` (depth markers
 out to 30 m for checking parallax against real objects) or `?scene=<url>` (another glTF).
 
 The display and camera are detected at startup (screen size, pixel ratio, platform, GPU and
@@ -57,14 +59,15 @@ and tuning live in [`config/default.yaml`](config/default.yaml); see
 
 ## Commands
 
-| Command                | What it does                                                        |
-| ---------------------- | ------------------------------------------------------------------- |
-| `npm run dev`          | Vite dev server                                                     |
-| `npm run check`        | typecheck + lint + prettier check + unit tests (run before commits) |
-| `npm test`             | Vitest unit tests (pure math, no browser needed)                    |
-| `npm run build`        | Production build to `dist/`                                         |
-| `npm run build:room`   | Regenerate `public/scenes/room.glb` from `scripts/build-room.ts`    |
-| `npm run fetch:models` | Re-download the MediaPipe face landmarker model                     |
+| Command                | What it does                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| `npm run dev`          | Vite dev server                                                               |
+| `npm run check`        | typecheck + lint + prettier check + unit tests (run before commits)           |
+| `npm test`             | Vitest unit tests (pure math, no browser needed)                              |
+| `npm run build`        | Production build to `dist/`                                                   |
+| `npm run build:room`   | Regenerate `public/scenes/room.glb` from `scripts/build-room.ts`              |
+| `npm run fetch:scenes` | Download external scene assets from `config/scenes.yaml` (run before `build`) |
+| `npm run fetch:models` | Re-download the MediaPipe face landmarker model                               |
 
 ## Documentation
 

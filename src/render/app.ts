@@ -19,9 +19,17 @@ export class App {
   readonly glassFrame = new GlassFrame();
   private sceneRoot: Group | undefined;
 
-  constructor(container: HTMLElement, nearM: number, farM: number) {
-    this.renderer = new WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  constructor(
+    container: HTMLElement,
+    nearM: number,
+    farM: number,
+    opts: { antialias?: boolean; maxPixelRatio?: number } = {},
+  ) {
+    this.renderer = new WebGLRenderer({
+      antialias: opts.antialias ?? true,
+      powerPreference: 'high-performance',
+    });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, opts.maxPixelRatio ?? 2));
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.0;
     container.appendChild(this.renderer.domElement);

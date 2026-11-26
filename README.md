@@ -19,7 +19,7 @@ npm run dev            # http://localhost:5173
 
 The page asks for the webcam and starts tracking. Sit about half a metre from the screen. The
 dropdown in the top-right corner switches scenes (the checkerboard box is the default; the
-Gaussian-splat apartment is far heavier).
+raccoon family is a Gaussian splat).
 
 - On macOS, turn **Center Stage off** and zoom to **1x** in the Video menu (menu-bar camera icon
   while the page uses the camera); otherwise the camera intrinsics drift at runtime.

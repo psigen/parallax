@@ -56,7 +56,7 @@ tracking:
   loss_timeout_ms: 500
 
 rendering:
-  # A scene id from config/scenes.yaml (room, racoon, ...) or a URL/path to a .glb or a splat
+  # A scene id from config/scenes.yaml (room, racoon) or a URL/path to a .glb or a splat
   # file (.spz/.sog/.ply/.splat/.ksplat). ?scene=<id|url> overrides. Scenes without a `window`
   # node are positioned by their manifest `placement`; override fields here, e.g.
   # placement: { scale: 0.1667 } for a room at 1/6 size (docs/scene-authoring.md).

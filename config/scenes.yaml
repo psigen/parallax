@@ -26,21 +26,3 @@ scenes:
       scale: 0.2
       rotation_deg: [0, 0, 0]
       position_mm: [0, -80, -350]
-
-  - id: apartment
-    name: Apartment_SH3
-    kind: splat
-    # Hosted as a release asset (never committed): `gh release create assets-v1 apartment.sog`.
-    # Reduce to ~2 M splats and crop in the SuperSplat editor before uploading (5 M / 63 MB as published).
-    url: https://github.com/psigen/parallax/releases/download/assets-v1/apartment.sog
-    sha256: 7a3be14b7d5517cc7ad78a1d594920400e83620942f8be7d4722fea130560d5e
-    license: CC BY 4.0
-    credit: '"Apartment_SH3" by milanoski — CC BY 4.0, via superspl.at'
-    source_url: https://superspl.at/scene/1e56ea8e
-    placement:
-      # 1/6 scale: the studio becomes a diorama behind the glass. The SOG's frame is upside down
-      # relative to ours (roll 180 fixes it); the origin is raised by a scaled eye height so the
-      # window looks into the room rather than along its floor. Fine-tune with `t`.
-      scale: 0.1667
-      rotation_deg: [0, 0, 180]
-      position_mm: [0, -370, -700]

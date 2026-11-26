@@ -478,7 +478,9 @@ async function main(): Promise<void> {
           warn('[offset] no tracked eye to capture');
           break;
         }
-        eyeOffsetMm = v3(eyeOffsetMm.x, eyeOffsetMm.y - cur.y, eyeOffsetMm.z);
+        // Absolute: the raw tracked y (offset not applied) must read as zero, so the offset is
+        // exactly its negation; pressing again with the eye still gives the same value.
+        eyeOffsetMm = v3(eyeOffsetMm.x, -cur.y, eyeOffsetMm.z);
         storeOffset('y re-zeroed at the current position');
         break;
       }

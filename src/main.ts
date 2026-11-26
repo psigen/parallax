@@ -137,6 +137,7 @@ async function main(): Promise<void> {
   if (rotParam) placement.rotation_deg = rotParam;
   let placementGroup: Group | undefined;
   let splatCount: number | undefined;
+  let shownEntry: SceneEntry | undefined = sceneEntry;
 
   if (!sceneEntry) {
     const ref = buildReferenceScene(0.55, shadows);
@@ -167,6 +168,7 @@ async function main(): Promise<void> {
     sceneBounds = loaded.bounds;
     placementGroup = loaded.placementGroup;
     splatCount = loaded.splatCount;
+    shownEntry = entryToShow;
     credit.set(entryToShow.credit, entryToShow.source_url);
     log(
       'info',
@@ -658,8 +660,8 @@ async function main(): Promise<void> {
       camera: cameraLine(),
       lighting: lightingLine(),
       device: describeDevice(device),
-      scene: sceneEntry
-        ? `${sceneEntry.id} (${sceneEntry.kind}${splatCount ? `, ${splatCount.toLocaleString()} splats` : ''})${placementGroup ? `  ${placementYaml(placement)}` : ''}`
+      scene: shownEntry
+        ? `${shownEntry.id} (${shownEntry.kind}${splatCount ? `, ${splatCount.toLocaleString()} splats` : ''})${placementGroup ? `  ${placementYaml(placement)}` : ''}`
         : 'reference',
       warnings: messages,
     });

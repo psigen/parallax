@@ -88,9 +88,9 @@ Mark where an object appears on the screen, move your head a measured `Δx` side
 and measure the shift with a ruler on the glass. With the eye `Z` from the screen:
 
 - object `d` behind the glass: shifts `Δx · d / (Z + d)` in the **same** direction as your head
-  (the room's back wall, 500 mm behind, at Z = 550 mm: 48 mm per 100 mm of head travel);
+  (the room's back wall, 300 mm behind, at Z = 550 mm: 35 mm per 100 mm of head travel);
 - object `d` in front of the glass: shifts `Δx · d / (Z − d)` in the **opposite** direction
-  (the room's yellow sphere, 60 mm in front: 12 mm; the reference scene's, 100 mm in front:
+  (the room's yellow sphere, 50 mm in front: 10 mm; the reference scene's, 100 mm in front:
   22 mm).
 
 Lateral tracking does not depend on the focal length (it cancels between depth and lateral

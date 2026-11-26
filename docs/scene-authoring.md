@@ -44,13 +44,29 @@ shifts the _tracked eye_ (not the scene) and defaults to the negated camera posi
 
 ## The bundled room
 
-`scripts/build-room.ts` generates `public/scenes/room.glb` with `@gltf-transform/core`:
-a 0.40 x 0.28 m opening, a 0.5 m deep room with a 50 mm vertex-coloured checkerboard on every
-wall, several objects at different depths, a column, a sphere protruding 60 mm in front of the
-glass, two point lights and a soft directional fill. It is authored with its origin on the floor
-under the opening (a "natural" origin for a room) and a `window` camera node at
-(0, 0.14, 0); the loader's re-rooting makes that node the display centre. Regenerate with
-`npm run build:room`.
+`scripts/build-room.ts` generates `public/scenes/room.glb` with `@gltf-transform/core`: a box
+the size of the display, attached to the back of the screen. Interior 300 mm wide x 200 mm high
+x 300 mm deep (the 14-inch panel is 302.4 x 196.4 mm), 50 mm vertex-coloured checkerboard on
+every wall (6 x 4 tiles on the back wall, 6 tiles deep), and a 20 mm dark frame in the glass
+plane around the opening so the 1-2 mm mismatch with the display never shows as a gap.
+
+Size references, all round numbers and axis-aligned, in the screen frame (mm):
+
+| Object        | Size                  | Position (centre)                                |
+| ------------- | --------------------- | ------------------------------------------------ |
+| Blue cube     | 100                   | x −100, on the floor (y −100..0), z −300..−200   |
+| Red cube      | 50                    | x +100, on the floor, z −125..−75                |
+| Green sphere  | 20 diameter           | (0, 0, −150)                                     |
+| Beige post    | 10 diameter, 200 tall | x +50, z −100, floor to ceiling                  |
+| Yellow sphere | 20 diameter           | (−60, +50, **+50**): 50 mm in front of the glass |
+
+Two point lights and a soft directional fill. It is authored with its origin on the floor under
+the opening (a "natural" origin for a room) and a `window` camera node at (0, 0.1, 0); the
+loader's re-rooting makes that node the display centre. Regenerate with `npm run build:room`.
+
+Expected on-screen sizes for an eye straight ahead at distance Z (mm), object at depth d behind
+the glass: size x Z / (Z + d). At Z = 550: a back-wall tile (d = 300) is 32 mm, the 100 mm cube's
+front face (d = 200) is 73 mm, the 50 mm cube's front face (d = 75) is 44 mm.
 
 ## Checking a scene
 

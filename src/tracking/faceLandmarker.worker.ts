@@ -3,15 +3,61 @@
  * with landmarks and head angles. Lives in a module worker; see docs/tracking-pipeline.md.
  */
 import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
+import { dueForAnalysis } from '../lighting/analysisSchedule';
+import { luminanceFromRgba } from '../lighting/luminanceImage';
+import { detectSources } from '../lighting/sourceDetector';
 import {
   headAnglesFromMatrix,
   LANDMARK_COUNT,
+  type LightingAnalysisParams,
+  type LightingAnalysisResult,
   type WorkerRequest,
   type WorkerResponse,
 } from './protocol';
 
 let landmarker: FaceLandmarker | undefined;
 let lastTimestampMs = -1;
+
+// Bright-source analysis for camera lighting, run here so the frame readback never stalls the
+// main thread. The bitmap is already in this worker for the landmarker.
+let lightingParams: LightingAnalysisParams | null = null;
+let lastAnalysisMs = -Infinity;
+let analysisCanvas: OffscreenCanvas | undefined;
+let analysisCtx: OffscreenCanvasRenderingContext2D | null = null;
+let analysisLogged = false;
+
+function analyzeLighting(
+  bitmap: ImageBitmap,
+): Omit<LightingAnalysisResult, 'tCaptureMs'> | undefined {
+  const p = lightingParams;
+  const now = performance.now();
+  if (!p || !dueForAnalysis(now, lastAnalysisMs, p.updateHz)) return undefined;
+  lastAnalysisMs = now;
+  const w = p.analysisWidthPx;
+  const h = Math.max(1, Math.round((w * bitmap.height) / bitmap.width));
+  if (analysisCanvas?.width !== w || analysisCanvas.height !== h) {
+    analysisCanvas = new OffscreenCanvas(w, h);
+    analysisCtx = analysisCanvas.getContext('2d', { willReadFrequently: true });
+  }
+  if (!analysisCtx) return undefined;
+  analysisCtx.drawImage(bitmap, 0, 0, w, h);
+  const rgba = analysisCtx.getImageData(0, 0, w, h).data;
+  const sources = detectSources(luminanceFromRgba(rgba, w, h), {
+    threshold: p.threshold,
+    minAreaPx: p.minAreaPx,
+    maxLights: p.maxLights,
+    mergeRadiusPx: p.mergeRadiusPx,
+  });
+  const analysisMs = performance.now() - now;
+  if (!analysisLogged) {
+    analysisLogged = true;
+    post({
+      type: 'log',
+      message: `lighting analysis ${w}x${h}: ${analysisMs.toFixed(1)} ms (first run)`,
+    });
+  }
+  return { sources, width: w, height: h, analysisMs };
+}
 
 function post(msg: WorkerResponse, transfer: Transferable[] = []): void {
   self.postMessage(msg, { transfer });
@@ -58,6 +104,7 @@ function detect(msg: Extract<WorkerRequest, { type: 'frame' }>): void {
   const t0 = performance.now();
   const result = landmarker.detectForVideo(msg.bitmap, ts);
   const inferenceMs = performance.now() - t0;
+  const lighting = analyzeLighting(msg.bitmap);
   msg.bitmap.close();
 
   const face = result.faceLandmarks[0];
@@ -72,6 +119,7 @@ function detect(msg: Extract<WorkerRequest, { type: 'frame' }>): void {
       yawRad: 0,
       pitchRad: 0,
       matrix: [],
+      ...(lighting ? { lighting } : {}),
     });
     return;
   }
@@ -95,6 +143,7 @@ function detect(msg: Extract<WorkerRequest, { type: 'frame' }>): void {
       landmarks,
       ...angles,
       matrix: matrix ? Array.from(matrix.data) : [],
+      ...(lighting ? { lighting } : {}),
     },
     [landmarks.buffer],
   );
@@ -106,6 +155,9 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
     init(msg).catch((err: unknown) => {
       post({ type: 'error', message: err instanceof Error ? err.message : String(err) });
     });
+  } else if (msg.type === 'lighting') {
+    lightingParams = msg.params;
+    lastAnalysisMs = -Infinity;
   } else {
     try {
       detect(msg);

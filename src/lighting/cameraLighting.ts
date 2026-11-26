@@ -1,12 +1,13 @@
 import { Box3, Scene, WebGLRenderer } from 'three';
 import type { LightingConfig } from '../config/schema';
 import type { CameraModel } from '../math/eyeEstimator';
+import type { LightingAnalysisSource } from '../tracking/mediapipeTracker';
+import type { LightingAnalysisParams, LightingAnalysisResult } from '../tracking/protocol';
 import { LinearSolidAngleModel, type BrightnessModel } from './brightnessModel';
 import { EnvironmentMap } from './environmentMap';
 import { KeyLightRig } from './keyLightRig';
 import { assignSources, type LightCandidate, type TrackedLight } from './lightAssignment';
-import { luminanceFromRgba } from './luminanceImage';
-import { detectSources, type LightSource } from './sourceDetector';
+import type { LightSource } from './sourceDetector';
 import { mapSource, type MappedSource } from './sourceMapping';
 
 export type LightingMode = 'off' | 'environment' | 'full';
@@ -27,47 +28,39 @@ export interface LightingStats {
 }
 
 /**
- * Orchestrates camera-based lighting: at `update_hz`, downsample the webcam frame, detect bright
- * sources, map them into the world, estimate intensities, track them across updates and drive
- * the key-light rig; on the same cadence refresh the environment map.
+ * Orchestrates camera-based lighting. Bright-source detection runs in the tracking worker on the
+ * frames it already has (see faceLandmarker.worker.ts); this class receives the sources, maps
+ * them into the world, estimates intensities, tracks them across updates and drives the key-light
+ * rig. On its own cadence it refreshes the environment map (which must live in the renderer's
+ * GL context, so it stays on the main thread).
  */
 export class CameraLighting {
   mode: LightingMode;
   readonly rig: KeyLightRig;
   lastDetected: DetectedLight[] = [];
-  readonly analysisWidth: number;
-  readonly analysisHeight: number;
+  /** Analysis image size the latest sources were detected at (for the debug overlay). */
+  analysisWidth = 1;
+  analysisHeight = 1;
   private readonly env: EnvironmentMap | undefined;
-  private readonly canvas: HTMLCanvasElement;
-  private readonly ctx: CanvasRenderingContext2D;
   private readonly brightness: BrightnessModel;
   private tracked: TrackedLight[] = [];
   private nextId = 1;
-  private lastUpdateMs = -Infinity;
+  private lastEnvMs = -Infinity;
+  private lastSourcesMs = -Infinity;
   private analysisMs = 0;
 
   constructor(
     renderer: WebGLRenderer,
     private readonly scene: Scene,
-    private readonly video: HTMLVideoElement,
+    video: HTMLVideoElement,
     private readonly cam: CameraModel,
     private readonly config: LightingConfig,
     private readonly bounds: Box3,
+    private readonly analysis: LightingAnalysisSource,
   ) {
     // Disabled in config: still constructed so `i` can turn it on, but starts off.
     this.mode = !config.enabled ? 'off' : config.key_lights.enabled ? 'full' : 'environment';
     const kl = config.key_lights;
-    this.analysisWidth = kl.analysis_width_px;
-    this.analysisHeight = Math.max(
-      1,
-      Math.round((kl.analysis_width_px * cam.intrinsics.height_px) / cam.intrinsics.width_px),
-    );
-    this.canvas = document.createElement('canvas');
-    this.canvas.width = this.analysisWidth;
-    this.canvas.height = this.analysisHeight;
-    const ctx = this.canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) throw new Error('2d context unavailable');
-    this.ctx = ctx;
     this.brightness = new LinearSolidAngleModel(() => ({
       gain: this.config.key_lights.brightness.gain,
       saturationBoost: this.config.key_lights.brightness.saturation_boost,
@@ -84,14 +77,24 @@ export class CameraLighting {
         fadeDeg: config.environment.fade_deg,
       });
     }
+    analysis.onLighting((r) => this.onSources(r));
     this.applyMode();
   }
 
   cycleMode(): LightingMode {
     const i = LIGHTING_MODES.indexOf(this.mode);
-    this.mode = LIGHTING_MODES[(i + 1) % LIGHTING_MODES.length] ?? 'off';
-    this.applyMode();
+    this.setMode(LIGHTING_MODES[(i + 1) % LIGHTING_MODES.length] ?? 'off');
     return this.mode;
+  }
+
+  setMode(mode: LightingMode): void {
+    this.mode = mode;
+    this.applyMode();
+  }
+
+  /** Push the current detection parameters to the worker (call after live tuning). */
+  syncParams(): void {
+    this.analysis.setLightingAnalysis(this.mode === 'full' ? this.analysisParams() : null);
   }
 
   get stats(): LightingStats {
@@ -105,53 +108,60 @@ export class CameraLighting {
     };
   }
 
-  /** Call once per rendered frame; does work only at the configured update rate. */
+  /** Call once per rendered frame; refreshes the environment map at its configured rate. */
   tick(nowMs: number): void {
-    if (this.mode === 'off') return;
-    const period = 1000 / Math.max(0.1, Math.max(this.config.environment.update_hz, 0.1));
-    if (nowMs - this.lastUpdateMs < period) return;
-    const dtS =
-      this.lastUpdateMs === -Infinity ? period / 1000 : (nowMs - this.lastUpdateMs) / 1000;
-    this.lastUpdateMs = nowMs;
-    if (this.video.readyState < 2) return;
-
-    if (this.env) {
-      this.scene.environment = this.env.update();
-      this.scene.environmentIntensity = this.config.environment.intensity;
-    }
-    if (this.mode === 'full') this.updateKeyLights(dtS);
+    if (this.mode === 'off' || !this.env) return;
+    if (nowMs - this.lastEnvMs < 1000 / Math.max(0.1, this.config.environment.update_hz)) return;
+    this.lastEnvMs = nowMs;
+    this.scene.environment = this.env.update();
+    this.scene.environmentIntensity = this.config.environment.intensity;
   }
 
   dispose(): void {
+    this.analysis.setLightingAnalysis(null);
     this.scene.remove(this.rig.group);
     this.scene.environment = null;
     this.env?.dispose();
   }
 
-  private applyMode(): void {
-    this.rig.group.visible = this.mode === 'full';
-    if (this.mode === 'off') {
-      this.scene.environment = null;
-      this.tracked = [];
-      this.lastDetected = [];
-    }
-    this.lastUpdateMs = -Infinity;
-  }
-
-  private updateKeyLights(dtS: number): void {
-    const t0 = performance.now();
+  private analysisParams(): LightingAnalysisParams {
     const kl = this.config.key_lights;
-    this.ctx.drawImage(this.video, 0, 0, this.analysisWidth, this.analysisHeight);
-    const rgba = this.ctx.getImageData(0, 0, this.analysisWidth, this.analysisHeight).data;
-    const lum = luminanceFromRgba(rgba, this.analysisWidth, this.analysisHeight);
-    const sources = detectSources(lum, {
+    return {
+      analysisWidthPx: kl.analysis_width_px,
       threshold: kl.threshold,
       minAreaPx: kl.min_area_px,
       maxLights: kl.max_lights,
       mergeRadiusPx: kl.merge_radius_px,
-    });
-    this.lastDetected = sources.map((source) => {
-      const mapped = mapSource(source, this.cam, this.analysisWidth, this.analysisHeight);
+      updateHz: this.config.environment.update_hz,
+    };
+  }
+
+  private applyMode(): void {
+    this.rig.group.visible = this.mode === 'full';
+    if (this.mode === 'off') this.scene.environment = null;
+    if (this.mode !== 'full') {
+      this.tracked = [];
+      this.lastDetected = [];
+      this.rig.update([], this.bounds);
+    }
+    this.lastEnvMs = -Infinity;
+    this.lastSourcesMs = -Infinity;
+    this.syncParams();
+  }
+
+  private onSources(r: LightingAnalysisResult): void {
+    if (this.mode !== 'full') return;
+    const kl = this.config.key_lights;
+    const dtS =
+      this.lastSourcesMs === -Infinity
+        ? 1 / this.config.environment.update_hz
+        : (r.tCaptureMs - this.lastSourcesMs) / 1000;
+    this.lastSourcesMs = r.tCaptureMs;
+    this.analysisMs = r.analysisMs;
+    this.analysisWidth = r.width;
+    this.analysisHeight = r.height;
+    this.lastDetected = r.sources.map((source) => {
+      const mapped = mapSource(source, this.cam, r.width, r.height);
       return { source, mapped, intensity: this.brightness.intensity(source, mapped.solidAngleSr) };
     });
     const candidates: LightCandidate[] = this.lastDetected.map((d) => ({
@@ -162,11 +172,10 @@ export class CameraLighting {
     this.tracked = assignSources(
       this.tracked,
       candidates,
-      dtS,
+      Math.max(dtS, 0),
       { maxAngleRad: 0.15, holdFrames: kl.hold_frames, smoothingHz: kl.smoothing_hz },
       () => this.nextId++,
     );
     this.rig.update(this.tracked, this.bounds);
-    this.analysisMs = performance.now() - t0;
   }
 }

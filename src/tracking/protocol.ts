@@ -3,7 +3,27 @@
  * turn a landmarker result into what the eye estimator needs. Kept free of worker/DOM globals so
  * the helpers are unit-testable.
  */
+import type { LightSource } from '../lighting/sourceDetector';
 import type { Vec2 } from '../math/vec';
+
+/** Parameters for the bright-source analysis the worker runs on tracked frames (null = off). */
+export interface LightingAnalysisParams {
+  analysisWidthPx: number;
+  threshold: number;
+  minAreaPx: number;
+  maxLights: number;
+  mergeRadiusPx: number;
+  updateHz: number;
+}
+
+export interface LightingAnalysisResult {
+  sources: LightSource[];
+  width: number;
+  height: number;
+  analysisMs: number;
+  /** Main-thread capture time of the analysed frame, ms. */
+  tCaptureMs: number;
+}
 
 export const LANDMARK_COUNT = 478;
 /** MediaPipe indices of the iris centres (anatomical left/right of the subject). */
@@ -12,7 +32,8 @@ export const LEFT_IRIS_CENTRE = 473;
 
 export type WorkerRequest =
   | { type: 'init'; wasmPath: string; modelPath: string; delegate: 'GPU' | 'CPU' }
-  | { type: 'frame'; id: number; bitmap: ImageBitmap; timestampMs: number };
+  | { type: 'frame'; id: number; bitmap: ImageBitmap; timestampMs: number }
+  | { type: 'lighting'; params: LightingAnalysisParams | null };
 
 export type WorkerResponse =
   | { type: 'ready'; delegate: 'GPU' | 'CPU' }
@@ -30,6 +51,8 @@ export type WorkerResponse =
       pitchRad: number;
       /** MediaPipe's 4x4 facial transformation matrix (16 numbers) or empty if unavailable. */
       matrix: number[];
+      /** Present when a lighting analysis ran on this frame. */
+      lighting?: Omit<LightingAnalysisResult, 'tCaptureMs'>;
     };
 
 export function landmarkAt(landmarks: Float32Array, index: number): Vec2 {

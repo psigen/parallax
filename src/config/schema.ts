@@ -66,6 +66,26 @@ export const trackingSchema = z.object({
     max_lead_ms: z.number().nonnegative(),
   }),
   loss_timeout_ms: z.number().nonnegative(),
+  /** Blink detection from eyelid geometry; holds the eye point while the irises are covered. */
+  blink: z
+    .object({
+      enabled: z.boolean().default(true),
+      enter_ratio: z.number().positive().max(1).default(0.6),
+      exit_ratio: z.number().positive().max(1).default(0.75),
+      baseline_tau_s: z.number().positive().default(2),
+      warmup_frames: z.number().int().positive().default(10),
+      hold_frames_after: z.number().int().nonnegative().default(1),
+    })
+    .prefault({}),
+  /** Plausibility guard on the iris separation (catches non-blink landmark glitches). */
+  guard: z
+    .object({
+      enabled: z.boolean().default(true),
+      max_jump_ratio: z.number().positive().default(0.12),
+      window_ms: z.number().positive().default(150),
+      max_reject_frames: z.number().int().positive().default(6),
+    })
+    .prefault({}),
 });
 
 export const lightingSchema = z.object({

@@ -82,7 +82,7 @@ export class DebugView {
     const t = f.faceTranslationCm;
     const lines = f.found
       ? [
-          `iris ${f.irisSeparationPx.toFixed(1)} px  depth ${f.depthMm.toFixed(0)} mm  yaw ${deg(f.yawRad)}°  pitch ${deg(f.pitchRad)}°  ${f.inferenceMs.toFixed(1)} ms`,
+          `iris ${f.irisSeparationPx.toFixed(1)} px  depth ${f.depthMm.toFixed(0)} mm  yaw ${deg(f.yawRad)}°  pitch ${deg(f.pitchRad)}°  ${f.inferenceMs.toFixed(1)} ms${f.ears ? `  EAR L ${f.ears.left.toFixed(2)} R ${f.ears.right.toFixed(2)}` : ''}${f.hold ? `  HOLD ${f.hold}` : ''}`,
           t
             ? `mediapipe xyz ${(t.x * 10).toFixed(0)} ${(t.y * 10).toFixed(0)} ${(t.z * 10).toFixed(0)} mm (its own camera model)`
             : '',

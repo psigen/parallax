@@ -4,6 +4,7 @@
  */
 import { FaceLandmarker, FilesetResolver } from '@mediapipe/tasks-vision';
 import { dueForAnalysis } from '../lighting/analysisSchedule';
+import { eyeAspectRatios } from '../math/blink';
 import { luminanceFromRgba } from '../lighting/luminanceImage';
 import { detectSources } from '../lighting/sourceDetector';
 import {
@@ -104,6 +105,7 @@ function detect(msg: Extract<WorkerRequest, { type: 'frame' }>): void {
   const t0 = performance.now();
   const result = landmarker.detectForVideo(msg.bitmap, ts);
   const inferenceMs = performance.now() - t0;
+  const frameAspect = msg.bitmap.width / Math.max(1, msg.bitmap.height);
   const lighting = analyzeLighting(msg.bitmap);
   msg.bitmap.close();
 
@@ -133,6 +135,7 @@ function detect(msg: Extract<WorkerRequest, { type: 'frame' }>): void {
   }
   const matrix = result.facialTransformationMatrixes[0];
   const angles = matrix ? headAnglesFromMatrix(matrix.data) : { yawRad: 0, pitchRad: 0 };
+  const ears = eyeAspectRatios(landmarks, frameAspect);
   post(
     {
       type: 'result',
@@ -144,6 +147,7 @@ function detect(msg: Extract<WorkerRequest, { type: 'frame' }>): void {
       ...angles,
       matrix: matrix ? Array.from(matrix.data) : [],
       ...(lighting ? { lighting } : {}),
+      ears,
     },
     [landmarks.buffer],
   );

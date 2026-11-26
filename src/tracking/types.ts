@@ -17,6 +17,8 @@ export interface EyeSample {
   };
   /** 0..1, for debugging; 1 for synthetic trackers. */
   confidence: number;
+  /** Set when the tracker repeated its last good position instead of trusting this frame. */
+  held?: 'blink' | 'guard';
 }
 
 export type EyeSampleListener = (sample: EyeSample) => void;

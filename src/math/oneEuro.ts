@@ -39,6 +39,11 @@ export class OneEuroFilter {
     return this.dx;
   }
 
+  /** Forget the velocity (e.g. while a position is being held rather than measured). */
+  zeroVelocity(): void {
+    this.dx = 0;
+  }
+
   get value(): number | null {
     return this.x;
   }
@@ -97,5 +102,11 @@ export class OneEuroVec3 {
 
   get velocity(): Vec3 {
     return v3(this.fx.velocity, this.fy.velocity, this.fz.velocity);
+  }
+
+  zeroVelocity(): void {
+    this.fx.zeroVelocity();
+    this.fy.zeroVelocity();
+    this.fz.zeroVelocity();
   }
 }

@@ -48,6 +48,8 @@ export class EyeState {
     }
     this.lastSampleMs = sample.tCaptureMs;
     const position = this.filter.filter(sample.eyeMm, tS);
+    // A held sample repeats the last good position: do not let the predictor keep extrapolating.
+    if (sample.held) this.filter.zeroVelocity();
     this.state = { position, velocity: this.filter.velocity, tS };
   }
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { EYE_LANDMARKS } from '../src/math/blink';
 import {
   faceTranslationCm,
   headAnglesFromMatrix,
@@ -66,5 +67,17 @@ describe('faceTranslationCm', () => {
   });
   it('returns undefined for malformed input', () => {
     expect(faceTranslationCm([])).toBeUndefined();
+  });
+});
+
+describe('eyelid landmark indices', () => {
+  it('are distinct and within the mesh', () => {
+    const all = [EYE_LANDMARKS.left, EYE_LANDMARKS.right].flatMap((e) => [
+      e.outer,
+      e.inner,
+      ...e.lids.flat(),
+    ]);
+    expect(new Set(all).size).toBe(all.length);
+    for (const i of all) expect(i).toBeLessThan(LANDMARK_COUNT);
   });
 });

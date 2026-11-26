@@ -124,6 +124,10 @@ tells both eyes everything is at screen distance, and the bezel is the dominant 
 - **Depth wobble with gaze**: the iris centre shifts a couple of mm as you look around, 3–5 % of
   the separation, so expect a few percent of depth wobble that follows your gaze. A measurement
   limit, not a calibration error.
+- **Blinks**: open the scope (`s`) and blink a few times. Raw dots during the blink are drawn
+  hollow (held) and the z trace shows no dip; the HUD `tracker` line reports `held: blink` and
+  a `holds/min` count. Compare with `?blink=0`. Slow left-right sweeps without blinking must
+  show no holds; if they do, the baseline does not fit your eyes: lower `enter_ratio` in `t` → blink hold.
 - **Snapshot**: `p` copies the HUD, browser metrics, camera settings, last tracker reading and
   config to the clipboard for sharing.
 

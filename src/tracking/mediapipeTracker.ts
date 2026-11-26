@@ -7,6 +7,8 @@ import {
   type IrisObservation,
 } from '../math/eyeEstimator';
 import { nextZoomStep, ZOOM_FALLBACK_FRAMES } from '../device/heuristics';
+import { BlinkDetector, SeparationGuard, type BlinkState } from '../math/blink';
+import type { Vec3 } from '../math/vec';
 import { CameraSource, type CameraSettings } from './cameraSource';
 import {
   faceTranslationCm,
@@ -31,6 +33,9 @@ export interface TrackerDebugFrame {
   /** Raw MediaPipe matrix (16 numbers) or empty. */
   matrix: number[];
   inferenceMs: number;
+  /** Eye aspect ratios and blink state for this frame, when available. */
+  ears?: { left: number; right: number };
+  hold?: 'blink' | 'guard';
 }
 
 export type TrackerDebugListener = (frame: TrackerDebugFrame) => void;
@@ -42,8 +47,36 @@ export interface LightingAnalysisSource {
   onLighting(listener: LightingListener): void;
 }
 
+export interface BlinkOptions {
+  enabled: boolean;
+  enter_ratio: number;
+  exit_ratio: number;
+  baseline_tau_s: number;
+  warmup_frames: number;
+  hold_frames_after: number;
+}
+export interface GuardOptions {
+  enabled: boolean;
+  max_jump_ratio: number;
+  window_ms: number;
+  max_reject_frames: number;
+}
+
+export interface HoldStats {
+  /** Current hold reason, if any. */
+  holding: 'blink' | 'guard' | undefined;
+  /** Duration of the current hold, ms. */
+  holdMs: number;
+  /** Holds that engaged in the last minute (rolling). */
+  holdsPerMinute: number;
+  blink: BlinkState | undefined;
+}
+
 export interface MediapipeTrackerOptions {
   camera: CameraConfig;
+  /** Read live (the tuning panel mutates the config object). */
+  blink?: () => BlinkOptions;
+  guard?: () => GuardOptions;
   /** Receives progress and warning messages from the worker. */
   onLog?: (message: string) => void;
   ipdMm: number;
@@ -83,6 +116,13 @@ export class MediapipeTracker implements Tracker, LightingAnalysisSource {
   private readonly baseFy: number;
   private zoom = 1;
   private framesWithoutFace = 0;
+  private blinkDetector: BlinkDetector | undefined;
+  private guard: SeparationGuard | undefined;
+  private lastGoodEyeMm: Vec3 | undefined;
+  private holdStartMs: number | undefined;
+  private holding: 'blink' | 'guard' | undefined;
+  private holdTimes: number[] = [];
+  private lastBlink: BlinkState | undefined;
 
   constructor(private readonly opts: MediapipeTrackerOptions) {
     this.name = `mediapipe:${opts.camera.id}`;
@@ -172,6 +212,72 @@ export class MediapipeTracker implements Tracker, LightingAnalysisSource {
 
   onDebug(listener: TrackerDebugListener): void {
     this.debugListener = listener;
+  }
+
+  get holdStats(): HoldStats {
+    const now = performance.now();
+    this.holdTimes = this.holdTimes.filter((t) => now - t < 60_000);
+    return {
+      holding: this.holding,
+      holdMs: this.holding && this.holdStartMs !== undefined ? now - this.holdStartMs : 0,
+      holdsPerMinute: this.holdTimes.length,
+      blink: this.lastBlink,
+    };
+  }
+
+  /**
+   * Decide whether this frame's irises can be trusted. Returns the hold reason when the last
+   * good position should be repeated instead.
+   */
+  private holdReason(
+    ears: { left: number; right: number } | undefined,
+    separationPx: number,
+    faceZ: number | undefined,
+    captureMs: number,
+  ): 'blink' | 'guard' | undefined {
+    const b = this.opts.blink?.();
+    const g = this.opts.guard?.();
+    let reason: 'blink' | 'guard' | undefined;
+    if (b?.enabled && ears) {
+      this.blinkDetector ??= new BlinkDetector({
+        enterRatio: b.enter_ratio,
+        exitRatio: b.exit_ratio,
+        baselineTauS: b.baseline_tau_s,
+        warmupFrames: b.warmup_frames,
+        holdFramesAfter: b.hold_frames_after,
+      });
+      this.lastBlink = this.blinkDetector.update(ears, captureMs);
+      if (this.lastBlink.blinking) reason = 'blink';
+    } else {
+      this.blinkDetector = undefined;
+      this.lastBlink = undefined;
+    }
+    if (g?.enabled) {
+      this.guard ??= new SeparationGuard({
+        maxJumpRatio: g.max_jump_ratio,
+        windowMs: g.window_ms,
+        maxRejectFrames: g.max_reject_frames,
+      });
+      // A blink frame must not become the guard's reference either.
+      if (reason === undefined && !this.guard.check(separationPx, faceZ, captureMs).accept) {
+        reason = 'guard';
+      }
+    } else {
+      this.guard = undefined;
+    }
+    if (reason && !this.holding) {
+      this.holdStartMs = captureMs;
+      this.holdTimes.push(performance.now());
+    }
+    this.holding = reason;
+    return reason;
+  }
+
+  /** Rebuild detector and guard after their settings change in the tuning panel. */
+  resetHoldState(): void {
+    this.blinkDetector = undefined;
+    this.guard = undefined;
+    this.holding = undefined;
   }
 
   /** Digital zoom crops the sensor, so the focal length in pixels scales with it. */
@@ -271,15 +377,21 @@ export class MediapipeTracker implements Tracker, LightingAnalysisSource {
     const obs: IrisObservation = { left, right, yawRad: msg.yawRad };
     this.lastObservation = obs;
     const est = estimateEye(obs, this.model, this.opts.ipdMm, this.yawCorrection, this.eyeSelect);
+    const faceT = faceTranslationCm(msg.matrix);
+    const hold = this.holdReason(msg.ears, est.irisSeparationPx, faceT?.z, captureMs);
+    const useHeld = hold !== undefined && this.lastGoodEyeMm !== undefined;
+    const eyeMm = useHeld && this.lastGoodEyeMm ? this.lastGoodEyeMm : est.eyeMm;
+    if (!hold) this.lastGoodEyeMm = est.eyeMm;
     this.emitter.emit({
-      eyeMm: est.eyeMm,
+      eyeMm,
       tCaptureMs: captureMs,
       tReadyMs: now,
       timings: {
         captureToTrackerMs: (flight?.sentMs ?? now) - captureMs,
         inferenceMs: msg.inferenceMs,
       },
-      confidence: 1,
+      confidence: useHeld ? 0.5 : 1,
+      ...(useHeld && hold ? { held: hold } : {}),
     });
     this.lastDebug = {
       video: this.source.video,
@@ -289,9 +401,11 @@ export class MediapipeTracker implements Tracker, LightingAnalysisSource {
       pitchRad: msg.pitchRad,
       irisSeparationPx: est.irisSeparationPx,
       depthMm: est.depthMm,
-      faceTranslationCm: faceTranslationCm(msg.matrix),
+      faceTranslationCm: faceT,
       matrix: msg.matrix,
       inferenceMs: msg.inferenceMs,
+      ...(msg.ears ? { ears: msg.ears } : {}),
+      ...(hold ? { hold } : {}),
     };
     this.debugListener?.(this.lastDebug);
   }

@@ -53,6 +53,8 @@ export type WorkerResponse =
       matrix: number[];
       /** Present when a lighting analysis ran on this frame. */
       lighting?: Omit<LightingAnalysisResult, 'tCaptureMs'>;
+      /** Eye aspect ratios (lid gap / eye width) per eye, for blink detection. */
+      ears?: { left: number; right: number };
     };
 
 export function landmarkAt(landmarks: Float32Array, index: number): Vec2 {

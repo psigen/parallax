@@ -54,6 +54,25 @@ tracking:
   prediction: { enabled: true, extra_lead_ms: 0, max_lead_ms: 80 }
   # After this long without a face, ease back to rest_eye_mm.
   loss_timeout_ms: 500
+  # Blinks: the eyelids cover the irises and MediaPipe's iris landmarks drift inward, so the
+  # depth estimate lurches. The eye aspect ratio (lid gap / eye width) per eye is compared with
+  # a self-calibrating open baseline; while either eye is closed (hysteresis: enter below
+  # enter_ratio x baseline, reopen above exit_ratio x baseline) the last good eye position is
+  # held. ?blink=0 or the tuning panel switches this off for comparison.
+  blink:
+    enabled: true
+    enter_ratio: 0.6
+    exit_ratio: 0.75
+    baseline_tau_s: 2
+    warmup_frames: 10
+    hold_frames_after: 1
+  # Backstop: an iris-separation change larger than max_jump_ratio within window_ms is held
+  # unless the face matrix's depth changed consistently; after max_reject_frames it is accepted.
+  guard:
+    enabled: true
+    max_jump_ratio: 0.12
+    window_ms: 150
+    max_reject_frames: 6
 
 rendering:
   # A scene id from config/scenes.yaml (room, racoon) or a URL/path to a .glb or a splat

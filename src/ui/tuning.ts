@@ -23,6 +23,13 @@ export class TuningPanel {
     p.add(tracking.prediction, 'extra_lead_ms', -50, 150, 1).name('extra lead ms');
     p.add(tracking.prediction, 'max_lead_ms', 0, 200, 1).name('max lead ms');
     this.gui.add(tracking, 'loss_timeout_ms', 100, 3000, 50).name('loss timeout ms');
+    const b = this.gui.addFolder('blink hold');
+    b.add(tracking.blink, 'enabled').name('blink detection');
+    b.add(tracking.blink, 'enter_ratio', 0.2, 0.9, 0.01).name('close below x base');
+    b.add(tracking.blink, 'exit_ratio', 0.3, 1, 0.01).name('open above x base');
+    b.add(tracking.blink, 'hold_frames_after', 0, 5, 1).name('hold frames after');
+    b.add(tracking.guard, 'enabled').name('separation guard');
+    b.add(tracking.guard, 'max_jump_ratio', 0.03, 0.5, 0.01).name('max jump ratio');
     const e = this.gui.addFolder('eye model');
     e.add(tracking, 'eye', ['cyclopean', 'left', 'right']).name('render for');
     e.add(tracking, 'yaw_correction').name('yaw correction');

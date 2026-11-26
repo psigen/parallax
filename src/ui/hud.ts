@@ -1,6 +1,8 @@
 export interface HudStats {
   trackerName: string;
   tracking: boolean;
+  /** Blink/guard hold state line (empty when the feature is off or idle). */
+  hold: string;
   eyeMm: { x: number; y: number; z: number };
   eyeOffsetMm: { x: number; y: number; z: number };
   renderFps: number;
@@ -55,7 +57,7 @@ export class Hud {
   update(s: HudStats): void {
     const f = (n: number, d = 0) => n.toFixed(d).padStart(6);
     const lines = [
-      `tracker   ${s.trackerName}${s.tracking ? '' : '  (no face: easing to default)'}`,
+      `tracker   ${s.trackerName}${s.tracking ? '' : '  (no face: easing to default)'}${s.hold ? `  ${s.hold}` : ''}`,
       `eye mm    x${f(s.eyeMm.x)} y${f(s.eyeMm.y)} z${f(s.eyeMm.z)}   offset ${f(s.eyeOffsetMm.x, 1)} ${f(s.eyeOffsetMm.y, 1)} ${f(s.eyeOffsetMm.z, 1)}`,
       `render    ${f(s.renderFps, 1)} fps     samples ${f(s.sampleHz, 1)} Hz     jitter σ ${f(s.noiseMm, 2)} mm`,
       `latency   capture→main ${f(s.trackerLatencyMs, 1)} ms   inference ${f(s.inferenceMs, 1)} ms`,

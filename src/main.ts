@@ -204,6 +204,7 @@ async function main(): Promise<void> {
         mpTracker.eyeSelect = t.eye;
       }
       lighting?.syncParams();
+      mpTracker?.resetHoldState();
     },
   );
   // ?diag=1 logs the first few tracker results in full (matrix included) for offline checking.
@@ -283,6 +284,15 @@ async function main(): Promise<void> {
       modelPath: MODEL_PATH,
       eyeSelect: config.tracking.eye,
       onLog: (m) => log('info', m),
+      // ?blink=0 disables blink holding and the separation guard for A/B comparison.
+      blink: () => ({
+        ...config.tracking.blink,
+        enabled: config.tracking.blink.enabled && params.get('blink') !== '0',
+      }),
+      guard: () => ({
+        ...config.tracking.guard,
+        enabled: config.tracking.guard.enabled && params.get('blink') !== '0',
+      }),
       ...(focalOverridePx !== undefined ? { focalOverridePx } : {}),
     });
     mpTracker.onDebug((f) => {
@@ -349,7 +359,7 @@ async function main(): Promise<void> {
     lastSample = s;
     sampleCount++;
     eyeState.push(s);
-    scope.pushRaw(s.tCaptureMs, s.eyeMm);
+    scope.pushRaw(s.tCaptureMs, s.eyeMm, s.held !== undefined);
   };
   let trackerStatus = 'starting';
   let lighting: CameraLighting | undefined;
@@ -585,6 +595,21 @@ async function main(): Promise<void> {
     return `${s.mode}  env ${s.envMs.toFixed(1)} ms  analysis ${s.analysisMs.toFixed(1)} ms  lights ${s.lights}${strongest}`;
   };
 
+  const holdLine = (): string => {
+    if (!mpTracker) return '';
+    const h = mpTracker.holdStats;
+    const blinkOff = params.get('blink') === '0' || !config.tracking.blink.enabled;
+    const state = h.holding
+      ? `held: ${h.holding} ${h.holdMs.toFixed(0)} ms`
+      : blinkOff
+        ? 'blink hold off'
+        : 'blink hold on';
+    const ears = h.blink
+      ? `  EAR ${h.blink.leftClosed ? 'L closed' : 'L open'}/${h.blink.rightClosed ? 'R closed' : 'R open'}${h.blink.warmingUp ? ' (warming up)' : ''}`
+      : '';
+    return `${state}  holds/min ${h.holdsPerMinute}${ears}`;
+  };
+
   const snapshot = (): string => {
     const d = mpTracker?.lastDebug;
     const debugLine = d
@@ -649,6 +674,7 @@ async function main(): Promise<void> {
     const raw = eyeState.raw;
     hud.update({
       trackerName: `${tracker.name}${mpTracker?.delegate ? ` (${mpTracker.delegate})` : ''} [${trackerStatus}]${frozenEyeMm ? ' [FROZEN k]' : ''}`,
+      hold: holdLine(),
       tracking: eyeState.tracking,
       eyeMm,
       eyeOffsetMm,

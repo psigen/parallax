@@ -4,6 +4,7 @@ interface Point {
   t: number;
   raw?: Vec3;
   rendered?: Vec3;
+  held?: boolean;
 }
 
 /**
@@ -42,8 +43,8 @@ export class TrackingScope {
     this.canvas.style.display = this.visible ? 'block' : 'none';
   }
 
-  pushRaw(tMs: number, eyeMm: Vec3): void {
-    this.points.push({ t: tMs, raw: eyeMm });
+  pushRaw(tMs: number, eyeMm: Vec3, held = false): void {
+    this.points.push({ t: tMs, raw: eyeMm, held });
     this.trim(tMs);
   }
 
@@ -93,8 +94,19 @@ export class TrackingScope {
       ctx.moveTo(0, y0 + rowH);
       ctx.lineTo(w, y0 + rowH);
       ctx.stroke();
-      ctx.fillStyle = color;
-      for (const p of raw) ctx.fillRect(sx(p.t) - 1.5, sy(p.raw?.[axis] ?? 0) - 1.5, 3, 3);
+      for (const p of raw) {
+        const px = sx(p.t);
+        const py = sy(p.raw?.[axis] ?? 0);
+        if (p.held) {
+          // Held samples (blink/guard) are drawn hollow so holds are visible on the trace.
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(px - 2, py - 2, 4, 4);
+        } else {
+          ctx.fillStyle = color;
+          ctx.fillRect(px - 1.5, py - 1.5, 3, 3);
+        }
+      }
       ctx.strokeStyle = '#fff';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -107,7 +119,11 @@ export class TrackingScope {
       ctx.stroke();
       ctx.fillStyle = color;
       ctx.font = '11px ui-monospace, monospace';
-      ctx.fillText(`${axis}  span ${span.toFixed(0)} mm   dots raw, line rendered`, 4, y0 + 12);
+      ctx.fillText(
+        `${axis}  span ${span.toFixed(0)} mm   dots raw (hollow = held), line rendered`,
+        4,
+        y0 + 12,
+      );
     });
   }
 

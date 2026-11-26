@@ -49,6 +49,20 @@ describe('OneEuroFilter', () => {
     expect(maxDev).toBeLessThan(1);
   });
 
+  it('can forget its velocity (used while a position is held during a blink)', () => {
+    const f = new OneEuroFilter(params);
+    for (let i = 0; i <= 30; i++) f.filter(300 * (i / 30), i / 30);
+    expect(Math.abs(f.velocity)).toBeGreaterThan(100);
+    f.zeroVelocity();
+    expect(f.velocity).toBe(0);
+    // Natural decay alone is slow at the default derivative cutoff: ~60 mm/s after 8 frames.
+    const g = new OneEuroFilter(params);
+    for (let i = 0; i <= 30; i++) g.filter(300 * (i / 30), i / 30);
+    const last = g.value ?? 0;
+    for (let i = 1; i <= 8; i++) g.filter(last, 1 + i / 30);
+    expect(Math.abs(g.velocity)).toBeGreaterThan(20);
+  });
+
   it('ignores non-increasing timestamps', () => {
     const f = new OneEuroFilter(params);
     f.filter(1, 1);

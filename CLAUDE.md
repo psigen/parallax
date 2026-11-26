@@ -1,4 +1,4 @@
-# parallax-demo: guidance for AI tooling
+# parallax: guidance for AI tooling
 
 This file is for Claude Code and other agents working in this repository. Humans: the same
 rules apply; see `docs/` for the technical documentation.

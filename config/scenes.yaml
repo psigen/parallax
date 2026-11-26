@@ -31,7 +31,7 @@ scenes:
   # - id: bar
   #   name: Bar (MipMap)
   #   kind: splat
-  #   url: https://github.com/psigen/parallax-demo/releases/download/assets-v1/bar.sog
+  #   url: https://github.com/psigen/parallax/releases/download/assets-v1/bar.sog
   #   sha256: <sha256 of the file>
   #   license: CC BY 4.0
   #   credit: '"Bar (MipMap)" by <author> — CC BY 4.0, via superspl.at'

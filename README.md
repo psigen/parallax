@@ -1,4 +1,4 @@
-# parallax-demo
+# parallax
 
 A browser demo where the screen behaves like a physical window into a 3D scene. A webcam tracks
 the viewer's eyes; the renderer uses an off-axis perspective projection so the scene shows the
@@ -57,14 +57,15 @@ and tuning live in [`config/default.yaml`](config/default.yaml); see
 
 ## Commands
 
-| Command                | What it does                                                        |
-| ---------------------- | ------------------------------------------------------------------- |
-| `npm run dev`          | Vite dev server                                                     |
-| `npm run check`        | typecheck + lint + prettier check + unit tests (run before commits) |
-| `npm test`             | Vitest unit tests (pure math, no browser needed)                    |
-| `npm run build`        | Production build to `dist/`                                         |
-| `npm run build:room`   | Regenerate `public/scenes/room.glb` from `scripts/build-room.ts`    |
-| `npm run fetch:models` | Re-download the MediaPipe face landmarker model                     |
+| Command                | What it does                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------- |
+| `npm run dev`          | Vite dev server                                                               |
+| `npm run check`        | typecheck + lint + prettier check + unit tests (run before commits)           |
+| `npm test`             | Vitest unit tests (pure math, no browser needed)                              |
+| `npm run build`        | Production build to `dist/`                                                   |
+| `npm run build:room`   | Regenerate `public/scenes/room.glb` from `scripts/build-room.ts`              |
+| `npm run fetch:scenes` | Download external scene assets from `config/scenes.yaml` (run before `build`) |
+| `npm run fetch:models` | Re-download the MediaPipe face landmarker model                               |
 
 ## Documentation
 

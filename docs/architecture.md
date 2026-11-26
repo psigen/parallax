@@ -30,13 +30,15 @@ between camera samples and hides capture latency.
 ## Repository layout
 
 ```
-config/default.yaml       all physical + tuning parameters (see docs/calibration.md)
+config/default.yaml       tuning parameters + device section (auto by default; docs/devices.md)
+config/devices.yaml       index of known displays and cameras (data only)
 src/config/               zod schema + YAML loader
 src/math/                 pure, renderer-independent math (fully unit tested)
   offAxisProjection.ts    off-axis frustum + Kooima general form
   viewportRect.ts         browser viewport → physical rectangle
   eyeEstimator.ts         iris landmarks → eye position; focal-length calibration
   oneEuro.ts, predictor.ts
+src/device/               display/camera auto-detection: observation → heuristics (the only guessing code) → resolve
 src/tracking/             camera source, MediaPipe worker, Tracker interface, mouse tracker
 src/render/               OffAxisCamera, glTF scene loader, render loop
 src/lighting/             webcam -> environment map + key lights (docs/lighting.md)

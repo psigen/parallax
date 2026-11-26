@@ -7,11 +7,11 @@ export function parseConfig(yamlText: string): Config {
   return configSchema.parse(raw);
 }
 
-export function findCamera(config: Config, id: string): CameraConfig {
-  const cam = config.cameras.find((c) => c.id === id);
+export function findCamera(cameras: readonly CameraConfig[], id: string): CameraConfig {
+  const cam = cameras.find((c) => c.id === id);
   if (!cam) {
     throw new Error(
-      `No camera with id "${id}" in config (have: ${config.cameras.map((c) => c.id).join(', ')})`,
+      `No camera with id "${id}" (have: ${cameras.map((c) => c.id).join(', ') || 'none'})`,
     );
   }
   return cam;

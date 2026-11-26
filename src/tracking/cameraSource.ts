@@ -17,6 +17,16 @@ export interface CameraSettings {
   width: number;
   height: number;
   frameRate: number;
+  /** Digital zoom in effect (1 when the camera has no zoom control). */
+  zoom: number;
+  zoomRange?: { min: number; max: number };
+}
+
+interface ZoomCapabilities {
+  zoom?: { min: number; max: number };
+}
+interface ZoomSettings {
+  zoom?: number;
 }
 
 /**
@@ -26,6 +36,7 @@ export interface CameraSettings {
 export class CameraSource {
   readonly video: HTMLVideoElement;
   private stream: MediaStream | undefined;
+  private track: MediaStreamTrack | undefined;
   private listener: FrameListener | undefined;
   private running = false;
 
@@ -66,10 +77,17 @@ export class CameraSource {
       frameRate: { ideal: cam.capture.frame_rate },
     };
     if (deviceId) video.deviceId = { exact: deviceId };
+    else if (cam.capture.facing_mode) video.facingMode = cam.capture.facing_mode;
     this.stream = await navigator.mediaDevices.getUserMedia({ video, audio: false });
     const track = this.stream.getVideoTracks()[0];
     if (!track) throw new Error('camera stream has no video track');
-    const s = track.getSettings();
+    this.track = track;
+    const range = (track.getCapabilities() as ZoomCapabilities).zoom;
+    if (range && cam.capture.zoom !== undefined) {
+      const target = cam.capture.zoom === 'widest' ? range.min : cam.capture.zoom;
+      await this.setZoom(target);
+    }
+    const s = track.getSettings() as MediaTrackSettings & ZoomSettings;
     this.video.srcObject = this.stream;
     document.body.appendChild(this.video);
     await this.video.play();
@@ -80,7 +98,20 @@ export class CameraSource {
       width: s.width ?? this.video.videoWidth,
       height: s.height ?? this.video.videoHeight,
       frameRate: s.frameRate ?? 0,
+      zoom: s.zoom ?? 1,
+      ...(range ? { zoomRange: range } : {}),
     };
+  }
+
+  /** Apply a digital zoom (clamped to the camera's range). Returns the zoom in effect. */
+  async setZoom(zoom: number): Promise<number> {
+    const track = this.track;
+    if (!track) return 1;
+    const range = (track.getCapabilities() as ZoomCapabilities).zoom;
+    if (!range) return 1;
+    const z = Math.min(range.max, Math.max(range.min, zoom));
+    await track.applyConstraints({ advanced: [{ zoom: z } as MediaTrackConstraintSet] });
+    return (track.getSettings() as ZoomSettings).zoom ?? z;
   }
 
   onFrame(listener: FrameListener): void {

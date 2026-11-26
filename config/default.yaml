@@ -4,15 +4,20 @@
 # Coordinate frame ("screen frame"): origin at the centre of the display's active area,
 # +x to the viewer's right, +y up, +z out of the screen toward the viewer. See docs/coordinate-systems.md.
 
-screen:
-  name: MacBook Pro 14-inch (M4) built-in display
-  # Active area, from Apple's 3024x1964 @ 254 ppi. Diagonal works out to 360.6 mm = 14.2 in.
-  width_mm: 302.4
-  height_mm: 196.4
-  # Normally the physical rectangle covered by the browser viewport is derived at runtime from
-  # window.screenX/screenY, outer/inner size and screen.width. Set this to pin it instead
-  # (screen-frame mm, y up): { left_mm: -151.2, right_mm: 151.2, bottom_mm: -98.2, top_mm: 98.2 }
-  viewport_override_mm: null
+device:
+  # Which display and cameras this is running on. `auto` observes the browser (screen size and
+  # pixel ratio, platform, GPU string, camera labels) and picks the best match from
+  # config/devices.yaml, rounding to the nearest known device or extrapolating when nothing
+  # matches; the HUD `device` line says what was decided and how confident it is
+  # (docs/devices.md). Nothing here names a specific device: that choice is the heuristic's.
+  #
+  # To override: `screen: { ref: apple-mbp-14-m4 }` (an index entry, optionally with fields such
+  # as width_mm on top), or explicit `screen: { name: bench, width_mm: 500, height_mm: 300 }`;
+  # `cameras: [{ ref: logitech-mx-brio, position_mm: [0, 160, 10] }]`; `default_camera: <id>`.
+  # Runtime: ?device=<screen id>, ?screen_mm=WxH, ?camera=<camera id>.
+  screen: auto
+  cameras: auto
+  default_camera: auto
 
 viewer:
   # Interpupillary distance of the person watching. Depth is derived from how many pixels apart
@@ -30,51 +35,6 @@ viewer:
   # and breaks any comparison with real-world geometry. Press `o` while tracking to re-zero the
   # Y component at your current position (x and z are left alone); `O` reverts to this value.
   eye_offset_mm: [0, 0, 0]
-
-default_camera: mbp14-builtin
-
-cameras:
-  - id: mbp14-builtin
-    # Substring matched against MediaDeviceInfo.label to select the device.
-    label_match: MacBook Pro Camera
-    capture: { width_px: 1280, height_px: 720, frame_rate: 30 }
-    # false: raw camera frames (image-x increasing = viewer moving to THEIR left).
-    mirrored: false
-    # Pinhole intrinsics at the reference resolution below; scaled if the stream differs.
-    # fx/fy are ESTIMATES derived from the 12MP module's 122 deg full-sensor diagonal FOV at the
-    # 1x crop. Calibrate with the in-app procedure (docs/calibration.md). macOS Center Stage
-    # must be OFF and zoom at 1x, otherwise these drift at runtime.
-    intrinsics:
-      width_px: 1280
-      height_px: 720
-      fx_px: 890
-      fy_px: 890
-      cx_px: 640
-      cy_px: 360
-    extrinsics:
-      # Lens centre in the screen frame. The lens sits in the notch, ~3.5 mm below the top edge
-      # of the active area (top edge is y = +98.2).
-      position_mm: [0, 94.7, 0]
-      # Pitch, yaw, roll of the optical axis relative to the screen normal, degrees.
-      rotation_deg: [0, 0, 0]
-
-  - id: mx-brio
-    label_match: MX Brio
-    capture: { width_px: 1280, height_px: 720, frame_rate: 60 }
-    mirrored: false
-    # ESTIMATE at the 90 deg diagonal FOV setting; calibrate. Changing the FOV in Logi Options+
-    # changes these.
-    intrinsics:
-      width_px: 1280
-      height_px: 720
-      fx_px: 800
-      fy_px: 800
-      cx_px: 640
-      cy_px: 360
-    extrinsics:
-      # Depends on how the camera is mounted; measure from the display centre.
-      position_mm: [0, 110, 20]
-      rotation_deg: [0, 0, 0]
 
 tracking:
   # iris_ipd: depth from iris pixel separation and ipd_mm (recommended).

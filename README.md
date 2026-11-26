@@ -38,15 +38,19 @@ The page asks for the webcam and starts tracking. Sit about half a metre from th
 | arrows, `[` `]` | nudge the eye point by 1 mm (Shift 10) / depth by 10 mm (Shift 50); stored per camera |
 | `f`             | freeze the tracked eye position for alignment tests                                   |
 | `p`             | copy a diagnostic snapshot to the clipboard                                           |
+| `D`             | ask the browser for the display's label (Window Management permission) and re-detect  |
 | `R`             | reset the filter                                                                      |
 
 URL parameters: `?tracker=mouse` (drive the eye with the mouse, wheel for distance),
 `?tracker=static&eye=250,0,550` (fixed eye), `?camera=mx-brio` (a camera id from the config),
-`?viewport=full` (assume the viewport is the whole display), `?eye_offset=0,0,0` (override the eye offset; zero = strict window), `?lighting=off|environment|full` (camera lighting mode at start), `?scene=reference` (depth markers
+`?viewport=full` (assume the viewport is the whole display), `?device=<screen id>` (force an index entry), `?screen_mm=WxH` (pin the display size), `?eye_offset=0,0,0` (override the eye offset; zero = strict window), `?lighting=off|environment|full` (camera lighting mode at start), `?scene=reference` (depth markers
 out to 30 m for checking parallax against real objects) or `?scene=<url>` (another glTF).
 
-All physical parameters (display size, camera intrinsics and position, interpupillary distance,
-filter tuning) live in [`config/default.yaml`](config/default.yaml).
+The display and camera are detected at startup (screen size, pixel ratio, platform, GPU and
+camera labels matched against [`config/devices.yaml`](config/devices.yaml), rounding to the
+nearest known device or extrapolating); the HUD `device` line says what was chosen. Overrides
+and tuning live in [`config/default.yaml`](config/default.yaml); see
+[docs/devices.md](docs/devices.md).
 
 ## Commands
 

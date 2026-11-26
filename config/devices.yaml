@@ -1,0 +1,414 @@
+# Known devices. Data only: nothing here is a default; src/device/heuristics.ts decides which
+# entry (if any) applies to the machine the browser is running on. Add a device by appending an
+# entry; tests check that width/height agree with native_px / ppi and that ids are unique.
+#
+# Coordinates: screen frame (origin at the display centre, +x right, +y up, +z toward the viewer),
+# millimetres. Camera FOVs are horizontal, for the 16:9 stream, and are estimates unless noted:
+# calibrate (`c`) to refine the focal length.
+
+screens:
+  - id: apple-mbp-14
+    name: MacBook Pro 14-inch (M1 Pro/Max, M2 Pro/Max, M3 family)
+    platform: macos
+    panel: { native_px: [3024, 1964], ppi: 254, width_mm: 302.4, height_mm: 196.4, notch: true }
+    css_modes: [[1024, 665], [1147, 745], [1352, 878], [1512, 982], [1800, 1169]]
+    gpu_hints:
+      [Apple M1 Pro, Apple M1 Max, Apple M2 Pro, Apple M2 Max, Apple M3, Apple M3 Pro, Apple M3 Max]
+    builtin_camera: { camera: apple-facetime-hd-1080p, position_mm: [0, 94.7, 0] }
+
+  - id: apple-mbp-14-m4
+    name: MacBook Pro 14-inch (M4 family, 2024)
+    platform: macos
+    panel: { native_px: [3024, 1964], ppi: 254, width_mm: 302.4, height_mm: 196.4, notch: true }
+    css_modes: [[1024, 665], [1147, 745], [1352, 878], [1512, 982], [1800, 1169]]
+    gpu_hints: [Apple M4, Apple M4 Pro, Apple M4 Max]
+    builtin_camera: { camera: apple-12mp-center-stage, position_mm: [0, 94.7, 0] }
+
+  - id: apple-mbp-16
+    name: MacBook Pro 16-inch (M1 Pro/Max, M2 Pro/Max, M3 Pro/Max)
+    platform: macos
+    panel: { native_px: [3456, 2234], ppi: 254, width_mm: 345.6, height_mm: 223.4, notch: true }
+    css_modes: [[1168, 755], [1312, 848], [1496, 967], [1728, 1117], [2056, 1329]]
+    gpu_hints: [Apple M1 Pro, Apple M1 Max, Apple M2 Pro, Apple M2 Max, Apple M3 Pro, Apple M3 Max]
+    builtin_camera: { camera: apple-facetime-hd-1080p, position_mm: [0, 108.2, 0] }
+
+  - id: apple-mbp-16-m4
+    name: MacBook Pro 16-inch (M4 Pro/Max, 2024)
+    platform: macos
+    panel: { native_px: [3456, 2234], ppi: 254, width_mm: 345.6, height_mm: 223.4, notch: true }
+    css_modes: [[1168, 755], [1312, 848], [1496, 967], [1728, 1117], [2056, 1329]]
+    gpu_hints: [Apple M4 Pro, Apple M4 Max]
+    builtin_camera: { camera: apple-12mp-center-stage, position_mm: [0, 108.2, 0] }
+
+  - id: apple-mbp-13-m1
+    name: MacBook Pro 13-inch (M1/M2, Touch Bar) and MacBook Air 13-inch (M1)
+    platform: macos
+    panel: { native_px: [2560, 1600], ppi: 227, width_mm: 286.5, height_mm: 179.1, notch: false }
+    css_modes: [[1024, 640], [1280, 800], [1440, 900], [1680, 1050]]
+    gpu_hints: [Apple M1, Apple M2]
+    # Camera in the bezel above the panel.
+    builtin_camera: { camera: apple-facetime-hd-720p, position_mm: [0, 95.6, 0] }
+
+  - id: apple-mba-13
+    name: MacBook Air 13-inch (M2/M3/M4)
+    platform: macos
+    panel: { native_px: [2560, 1664], ppi: 224, width_mm: 290.3, height_mm: 188.7, notch: true }
+    css_modes: [[1024, 665], [1280, 832], [1470, 956], [1710, 1112]]
+    gpu_hints: [Apple M2, Apple M3, Apple M4]
+    builtin_camera: { camera: apple-facetime-hd-1080p, position_mm: [0, 90.9, 0] }
+
+  - id: apple-mba-15
+    name: MacBook Air 15-inch (M2/M3/M4)
+    platform: macos
+    panel: { native_px: [2880, 1864], ppi: 224, width_mm: 326.6, height_mm: 211.4, notch: true }
+    css_modes: [[1147, 742], [1440, 932], [1710, 1107], [1920, 1243]]
+    gpu_hints: [Apple M2, Apple M3, Apple M4]
+    builtin_camera: { camera: apple-facetime-hd-1080p, position_mm: [0, 102.2, 0] }
+
+  - id: apple-imac-24
+    name: iMac 24-inch (M1/M3)
+    platform: macos
+    panel: { native_px: [4480, 2520], ppi: 218, width_mm: 522.0, height_mm: 293.6, notch: false }
+    css_modes: [[1920, 1080], [2240, 1260], [2560, 1440]]
+    gpu_hints: [Apple M1, Apple M3]
+    builtin_camera: { camera: apple-facetime-hd-1080p, position_mm: [0, 158.8, 0] }
+
+  - id: apple-imac-24-m4
+    name: iMac 24-inch (M4)
+    platform: macos
+    panel: { native_px: [4480, 2520], ppi: 218, width_mm: 522.0, height_mm: 293.6, notch: false }
+    css_modes: [[1920, 1080], [2240, 1260], [2560, 1440]]
+    gpu_hints: [Apple M4]
+    builtin_camera: { camera: apple-12mp-center-stage, position_mm: [0, 158.8, 0] }
+
+  - id: apple-studio-display
+    name: Apple Studio Display
+    platform: macos
+    panel: { native_px: [5120, 2880], ppi: 218, width_mm: 596.6, height_mm: 335.6, notch: false }
+    css_modes: [[1920, 1080], [2048, 1152], [2560, 1440], [2880, 1620], [3200, 1800]]
+    labels: [Studio Display]
+    builtin_camera: { camera: apple-12mp-center-stage, position_mm: [0, 179.8, 0] }
+
+  - id: apple-pro-display-xdr
+    name: Apple Pro Display XDR
+    platform: macos
+    panel: { native_px: [6016, 3384], ppi: 218, width_mm: 701.0, height_mm: 394.3, notch: false }
+    css_modes: [[2560, 1440], [3008, 1692], [3360, 1890]]
+    labels: [Pro Display XDR]
+
+  # ---- Phones (portrait native resolution; css_modes are the logical portrait sizes) ----
+
+  - id: apple-iphone-se
+    name: iPhone SE (2nd/3rd gen)
+    platform: ios
+    panel: { native_px: [750, 1334], ppi: 325.6, width_mm: 58.5, height_mm: 104.1, notch: false }
+    css_modes: [[375, 667]]
+    dpr: 2
+    builtin_camera: { camera: apple-iphone-front, position_mm: [0, 58.0, 0] }
+
+  - id: apple-iphone-x
+    name: iPhone X / XS / 11 Pro
+    platform: ios
+    panel: { native_px: [1125, 2436], ppi: 462.6, width_mm: 61.8, height_mm: 133.7, notch: false }
+    css_modes: [[375, 812]]
+    dpr: 3
+    builtin_camera: { camera: apple-iphone-front, position_mm: [0, 62.8, 0] }
+
+  - id: apple-iphone-xs-max
+    name: iPhone XS Max / 11 Pro Max
+    platform: ios
+    panel: { native_px: [1242, 2688], ppi: 455.5, width_mm: 69.3, height_mm: 149.9, notch: false }
+    css_modes: [[414, 896]]
+    dpr: 3
+    builtin_camera: { camera: apple-iphone-front, position_mm: [0, 71.0, 0] }
+
+  - id: apple-iphone-11
+    name: iPhone XR / 11
+    platform: ios
+    panel: { native_px: [828, 1792], ppi: 323.6, width_mm: 65.0, height_mm: 140.7, notch: false }
+    css_modes: [[414, 896]]
+    dpr: 2
+    builtin_camera: { camera: apple-iphone-front, position_mm: [0, 66.3, 0] }
+
+  - id: apple-iphone-12-mini
+    name: iPhone 12 mini / 13 mini
+    platform: ios
+    panel: { native_px: [1080, 2340], ppi: 477.3, width_mm: 57.5, height_mm: 124.5, notch: false }
+    css_modes: [[375, 812]]
+    dpr: 3
+    builtin_camera: { camera: apple-iphone-front, position_mm: [0, 58.2, 0] }
+
+  - id: apple-iphone-12
+    name: iPhone 12 / 12 Pro / 13 / 13 Pro / 14
+    platform: ios
+    panel: { native_px: [1170, 2532], ppi: 457.3, width_mm: 65.0, height_mm: 140.6, notch: false }
+    css_modes: [[390, 844]]
+    dpr: 3
+    builtin_camera: { camera: apple-iphone-front, position_mm: [0, 66.3, 0] }
+
+  - id: apple-iphone-12-pro-max
+    name: iPhone 12 Pro Max / 13 Pro Max / 14 Plus
+    platform: ios
+    panel: { native_px: [1284, 2778], ppi: 456.8, width_mm: 71.4, height_mm: 154.5, notch: false }
+    css_modes: [[428, 926]]
+    dpr: 3
+    builtin_camera: { camera: apple-iphone-front, position_mm: [0, 73.2, 0] }
+
+  - id: apple-iphone-14-pro
+    name: iPhone 14 Pro / 15 / 15 Pro / 16
+    platform: ios
+    panel: { native_px: [1179, 2556], ppi: 461.4, width_mm: 64.9, height_mm: 140.7, notch: false }
+    css_modes: [[393, 852]]
+    dpr: 3
+    builtin_camera: { camera: apple-iphone-front, position_mm: [0, 62.3, 0] }
+
+  - id: apple-iphone-14-pro-max
+    name: iPhone 14 Pro Max / 15 Plus / 15 Pro Max / 16 Plus
+    platform: ios
+    panel: { native_px: [1290, 2796], ppi: 459.6, width_mm: 71.3, height_mm: 154.5, notch: false }
+    css_modes: [[430, 932]]
+    dpr: 3
+    builtin_camera: { camera: apple-iphone-front, position_mm: [0, 69.2, 0] }
+
+  - id: apple-iphone-16-pro
+    name: iPhone 16 Pro
+    platform: ios
+    panel: { native_px: [1206, 2622], ppi: 458.1, width_mm: 66.9, height_mm: 145.4, notch: false }
+    css_modes: [[402, 874]]
+    dpr: 3
+    builtin_camera: { camera: apple-iphone-front, position_mm: [0, 64.7, 0] }
+
+  - id: apple-iphone-16-pro-max
+    name: iPhone 16 Pro Max
+    platform: ios
+    panel: { native_px: [1320, 2868], ppi: 457.6, width_mm: 73.3, height_mm: 159.2, notch: false }
+    css_modes: [[440, 956]]
+    dpr: 3
+    builtin_camera: { camera: apple-iphone-front, position_mm: [0, 71.6, 0] }
+
+  - id: google-pixel-7
+    name: Google Pixel 7
+    platform: android
+    panel: { native_px: [1080, 2400], ppi: 417.7, width_mm: 65.7, height_mm: 145.9, notch: false }
+    model_hints: [Pixel 7]
+    builtin_camera: { camera: android-front-generic, position_mm: [0, 68.0, 0] }
+
+  - id: google-pixel-7-pro
+    name: Google Pixel 7 Pro
+    platform: android
+    panel: { native_px: [1440, 3120], ppi: 512.9, width_mm: 71.3, height_mm: 154.5, notch: false }
+    model_hints: [Pixel 7 Pro]
+    builtin_camera: { camera: android-front-generic, position_mm: [0, 72.2, 0] }
+
+  - id: google-pixel-8
+    name: Google Pixel 8
+    platform: android
+    panel: { native_px: [1080, 2400], ppi: 424.5, width_mm: 64.6, height_mm: 143.6, notch: false }
+    model_hints: [Pixel 8]
+    builtin_camera: { camera: android-front-generic, position_mm: [0, 66.8, 0] }
+
+  - id: google-pixel-8-pro
+    name: Google Pixel 8 Pro
+    platform: android
+    panel: { native_px: [1344, 2992], ppi: 489.6, width_mm: 69.7, height_mm: 155.2, notch: false }
+    model_hints: [Pixel 8 Pro]
+    builtin_camera: { camera: android-front-generic, position_mm: [0, 72.6, 0] }
+
+  - id: google-pixel-9
+    name: Google Pixel 9
+    platform: android
+    panel: { native_px: [1080, 2424], ppi: 421.2, width_mm: 65.1, height_mm: 146.2, notch: false }
+    model_hints: [Pixel 9]
+    builtin_camera: { camera: android-front-generic, position_mm: [0, 68.1, 0] }
+
+  - id: google-pixel-9-pro
+    name: Google Pixel 9 Pro
+    platform: android
+    panel: { native_px: [1280, 2856], ppi: 496.8, width_mm: 65.4, height_mm: 146.0, notch: false }
+    model_hints: [Pixel 9 Pro]
+    builtin_camera: { camera: android-front-generic, position_mm: [0, 68.0, 0] }
+
+  - id: google-pixel-9-pro-xl
+    name: Google Pixel 9 Pro XL
+    platform: android
+    panel: { native_px: [1344, 2992], ppi: 482.4, width_mm: 70.8, height_mm: 157.6, notch: false }
+    model_hints: [Pixel 9 Pro XL]
+    builtin_camera: { camera: android-front-generic, position_mm: [0, 73.8, 0] }
+
+  - id: samsung-galaxy-s23
+    name: Samsung Galaxy S23
+    platform: android
+    panel: { native_px: [1080, 2340], ppi: 422.5, width_mm: 64.9, height_mm: 140.7, notch: false }
+    model_hints: [SM-S911]
+    builtin_camera: { camera: android-front-generic, position_mm: [0, 65.3, 0] }
+
+  - id: samsung-galaxy-s23-plus
+    name: Samsung Galaxy S23+
+    platform: android
+    panel: { native_px: [1080, 2340], ppi: 390.5, width_mm: 70.3, height_mm: 152.2, notch: false }
+    model_hints: [SM-S916]
+    builtin_camera: { camera: android-front-generic, position_mm: [0, 71.1, 0] }
+
+  - id: samsung-galaxy-s23-ultra
+    name: Samsung Galaxy S23 Ultra
+    platform: android
+    panel: { native_px: [1440, 3088], ppi: 501.1, width_mm: 73.0, height_mm: 156.5, notch: false }
+    model_hints: [SM-S918]
+    builtin_camera: { camera: android-front-generic, position_mm: [0, 73.2, 0] }
+
+  - id: samsung-galaxy-s24
+    name: Samsung Galaxy S24
+    platform: android
+    panel: { native_px: [1080, 2340], ppi: 415.7, width_mm: 66.0, height_mm: 143.0, notch: false }
+    model_hints: [SM-S921]
+    builtin_camera: { camera: android-front-generic, position_mm: [0, 66.5, 0] }
+
+  - id: samsung-galaxy-s24-plus
+    name: Samsung Galaxy S24+
+    platform: android
+    panel: { native_px: [1440, 3120], ppi: 512.9, width_mm: 71.3, height_mm: 154.5, notch: false }
+    model_hints: [SM-S926]
+    builtin_camera: { camera: android-front-generic, position_mm: [0, 72.2, 0] }
+
+  - id: samsung-galaxy-s24-ultra
+    name: Samsung Galaxy S24 Ultra
+    platform: android
+    panel: { native_px: [1440, 3120], ppi: 505.3, width_mm: 72.4, height_mm: 156.8, notch: false }
+    model_hints: [SM-S928]
+    builtin_camera: { camera: android-front-generic, position_mm: [0, 73.4, 0] }
+
+  # ---- Desktop monitors (platform any; matched by Window Management label or used as size classes) ----
+
+  - id: lg-ultrafine-5k
+    name: LG UltraFine 5K 27-inch
+    platform: any
+    external: true
+    panel: { native_px: [5120, 2880], ppi: 217.6, width_mm: 597.7, height_mm: 336.2, notch: false }
+    labels: [LG UltraFine, 27MD5K]
+    builtin_camera: { camera: apple-facetime-hd-1080p, position_mm: [0, 180.1, 0] }
+
+  - id: dell-u2720q
+    name: Dell U2720Q 27-inch 4K
+    platform: any
+    external: true
+    panel: { native_px: [3840, 2160], ppi: 163.2, width_mm: 597.7, height_mm: 336.2, notch: false }
+    labels: [DELL U2720Q, U2720Q]
+
+  - id: dell-u2723qe
+    name: Dell U2723QE 27-inch 4K
+    platform: any
+    external: true
+    panel: { native_px: [3840, 2160], ppi: 163.2, width_mm: 597.7, height_mm: 336.2, notch: false }
+    labels: [DELL U2723QE, U2723QE]
+
+  - id: lg-27uk850
+    name: LG 27UK850 27-inch 4K
+    platform: any
+    external: true
+    panel: { native_px: [3840, 2160], ppi: 163.2, width_mm: 597.7, height_mm: 336.2, notch: false }
+    labels: [27UK850]
+
+  - id: generic-24-fhd
+    name: Generic 24-inch 1080p monitor
+    platform: any
+    external: true
+    panel: { native_px: [1920, 1080], ppi: 91.8, width_mm: 531.3, height_mm: 298.9, notch: false }
+    labels: []
+
+  - id: generic-27-qhd
+    name: Generic 27-inch 1440p monitor
+    platform: any
+    external: true
+    panel: { native_px: [2560, 1440], ppi: 108.8, width_mm: 597.7, height_mm: 336.2, notch: false }
+    labels: []
+
+  - id: generic-27-4k
+    name: Generic 27-inch 4K monitor
+    platform: any
+    external: true
+    panel: { native_px: [3840, 2160], ppi: 163.2, width_mm: 597.7, height_mm: 336.2, notch: false }
+    labels: []
+
+  - id: generic-32-4k
+    name: Generic 32-inch 4K monitor
+    platform: any
+    external: true
+    panel: { native_px: [3840, 2160], ppi: 137.7, width_mm: 708.4, height_mm: 398.5, notch: false }
+    labels: []
+
+cameras:
+  - id: apple-12mp-center-stage
+    name: Apple 12MP Center Stage camera (1x, Center Stage off)
+    label_match: [MacBook Pro Camera, MacBook Air Camera, Studio Display Camera, iMac Camera]
+    hfov_deg: 72
+    estimate: true
+    capture: { width_px: 1280, height_px: 720, frame_rate: 30 }
+
+  - id: apple-facetime-hd-1080p
+    name: Apple FaceTime HD camera (1080p)
+    label_match: [FaceTime HD Camera]
+    max_height_px: 1080
+    hfov_deg: 65
+    estimate: true
+    capture: { width_px: 1280, height_px: 720, frame_rate: 30 }
+
+  - id: apple-facetime-hd-720p
+    name: Apple FaceTime HD camera (720p)
+    label_match: [FaceTime HD Camera]
+    max_height_px: 720
+    hfov_deg: 58
+    estimate: true
+    capture: { width_px: 1280, height_px: 720, frame_rate: 30 }
+
+  - id: logitech-c920
+    name: Logitech C920 / C922 (78° diagonal)
+    label_match: [C920, C922]
+    hfov_deg: 70.4
+    estimate: false
+    capture: { width_px: 1280, height_px: 720, frame_rate: 30 }
+    mount: { position_mm_from_top_centre: [0, 15, 20] }
+
+  - id: logitech-brio
+    name: Logitech Brio 4K (90° diagonal default)
+    label_match: [Logitech BRIO, Brio]
+    hfov_deg: 82
+    estimate: true
+    capture: { width_px: 1280, height_px: 720, frame_rate: 60 }
+    mount: { position_mm_from_top_centre: [0, 15, 20] }
+
+  - id: logitech-mx-brio
+    name: Logitech MX Brio (90° diagonal default)
+    label_match: [MX Brio]
+    hfov_deg: 82
+    estimate: true
+    capture: { width_px: 1280, height_px: 720, frame_rate: 60 }
+    mount: { position_mm_from_top_centre: [0, 15, 20] }
+
+  - id: apple-iphone-front
+    name: iPhone front (TrueDepth) camera
+    label_match: [Front Camera, FaceTime]
+    hfov_deg: 72
+    estimate: true
+    capture: { width_px: 1280, height_px: 720, frame_rate: 30 }
+
+  - id: android-front-generic
+    name: Android front camera (generic)
+    label_match: [facing front, front camera, 'camera2 1']
+    hfov_deg: 78
+    estimate: true
+    capture: { width_px: 1280, height_px: 720, frame_rate: 30 }
+
+  - id: laptop-integrated-generic
+    name: Integrated laptop webcam (generic)
+    label_match: [Integrated, Built-in, HD Webcam, HD Camera, Internal]
+    hfov_deg: 68
+    estimate: true
+    capture: { width_px: 1280, height_px: 720, frame_rate: 30 }
+
+  - id: generic-uvc
+    name: Unrecognised webcam (generic assumptions)
+    label_match: []
+    hfov_deg: 65
+    estimate: true
+    capture: { width_px: 1280, height_px: 720, frame_rate: 30 }
+    mount: { position_mm_from_top_centre: [0, 15, 20] }

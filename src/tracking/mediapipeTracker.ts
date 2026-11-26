@@ -6,6 +6,7 @@ import {
   type EyeSelect,
   type IrisObservation,
 } from '../math/eyeEstimator';
+import { nextZoomStep, ZOOM_FALLBACK_FRAMES } from '../device/heuristics';
 import { CameraSource, type CameraSettings } from './cameraSource';
 import {
   faceTranslationCm,
@@ -77,6 +78,11 @@ export class MediapipeTracker implements Tracker, LightingAnalysisSource {
   yawCorrection: boolean;
   eyeSelect: EyeSelect;
   lastDebug: TrackerDebugFrame | undefined;
+  /** Intrinsics at zoom 1 (the index/config values); the model's are scaled by the zoom in effect. */
+  private readonly baseFx: number;
+  private readonly baseFy: number;
+  private zoom = 1;
+  private framesWithoutFace = 0;
 
   constructor(private readonly opts: MediapipeTrackerOptions) {
     this.name = `mediapipe:${opts.camera.id}`;
@@ -88,6 +94,8 @@ export class MediapipeTracker implements Tracker, LightingAnalysisSource {
       intrinsics.fy_px = opts.focalOverridePx;
     }
     this.model = { intrinsics, extrinsics: opts.camera.extrinsics, mirrored: opts.camera.mirrored };
+    this.baseFx = intrinsics.fx_px;
+    this.baseFy = intrinsics.fy_px;
   }
 
   get video(): HTMLVideoElement {
@@ -126,6 +134,7 @@ export class MediapipeTracker implements Tracker, LightingAnalysisSource {
     const [settings] = await Promise.all([this.source.start(this.opts.camera), ready]);
     if (this.lightingParams) this.postLighting();
     this.settings = settings;
+    this.applyZoom(settings.zoom);
     const refAspect = this.model.intrinsics.width_px / this.model.intrinsics.height_px;
     if (Math.abs(settings.width / settings.height - refAspect) > 0.02) {
       console.warn(
@@ -163,6 +172,28 @@ export class MediapipeTracker implements Tracker, LightingAnalysisSource {
 
   onDebug(listener: TrackerDebugListener): void {
     this.debugListener = listener;
+  }
+
+  /** Digital zoom crops the sensor, so the focal length in pixels scales with it. */
+  private applyZoom(zoom: number): void {
+    this.zoom = zoom;
+    this.model.intrinsics.fx_px = this.baseFx * zoom;
+    this.model.intrinsics.fy_px = this.baseFy * zoom;
+  }
+
+  /**
+   * Widest zoom gives the most room to move but can distort the face beyond what the detector
+   * handles; after a run of frames without a face, step the zoom toward 1x.
+   */
+  private async zoomFallback(): Promise<void> {
+    const next = nextZoomStep(this.zoom);
+    if (next === undefined || !this.settings?.zoomRange) return;
+    const applied = await this.source.setZoom(next);
+    this.applyZoom(applied);
+    this.framesWithoutFace = 0;
+    this.opts.onLog?.(
+      `[tracker] no face at zoom ${this.zoom.toFixed(2)}; trying ${applied.toFixed(2)}`,
+    );
   }
 
   /** Ask the worker to detect bright sources on tracked frames (null stops it). */
@@ -216,6 +247,10 @@ export class MediapipeTracker implements Tracker, LightingAnalysisSource {
 
     if (!msg.found) {
       this.lastObservation = undefined;
+      if (++this.framesWithoutFace >= ZOOM_FALLBACK_FRAMES && this.settings?.zoomRange) {
+        this.framesWithoutFace = 0;
+        void this.zoomFallback();
+      }
       this.lastDebug = {
         video: this.source.video,
         found: false,
@@ -231,6 +266,7 @@ export class MediapipeTracker implements Tracker, LightingAnalysisSource {
       this.debugListener?.(this.lastDebug);
       return;
     }
+    this.framesWithoutFace = 0;
     const { left, right } = irisCentres(msg.landmarks);
     const obs: IrisObservation = { left, right, yawRad: msg.yawRad };
     this.lastObservation = obs;

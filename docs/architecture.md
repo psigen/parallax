@@ -50,6 +50,13 @@ tests/                    Vitest suites (Node, no browser)
 docs/                     this documentation
 ```
 
+## Deployment
+
+`.github/workflows/pages.yml` builds on every push to `main` (after `npm run check`) and
+publishes `dist/` with `actions/deploy-pages` to https://parallax.pras.ai. The app is served
+from the domain root, so the absolute asset paths (`/mediapipe/wasm`, `/models`, `/scenes`)
+need no base-path configuration. GitHub Pages serves over HTTPS, which `getUserMedia` requires.
+
 ## Quality gates
 
 `npm run check` = typecheck (three tsconfigs: app, tests, node scripts) + eslint (type-aware,

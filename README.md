@@ -6,6 +6,9 @@ geometrically correct parallax for the viewer's actual eye position relative to 
 
 Priorities, in order: **projection correctness**, then **tracking latency**, then everything else.
 
+Live build: **https://parallax.pras.ai** (deployed from `main` by GitHub Pages; needs a browser
+with webcam access, Chrome or Safari).
+
 ## Quick start
 
 ```sh

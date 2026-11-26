@@ -30,6 +30,10 @@ geometrically correct view. Priorities: projection correctness, then tracking la
   validates boot and plumbing only; headless software GL cannot validate lighting or latency.
   Geometry claims are checked with the ruler/parallels tests in `docs/calibration.md`.
 
+- **Deployment.** Merging to `main` deploys to https://parallax.pras.ai via
+  `.github/workflows/pages.yml`; the workflow runs `npm run check` first, so a red check blocks
+  the deploy. Do not add a base path: the site lives at the domain root.
+
 ## Architecture rules
 
 - **The screen is a flat plate.** The scene is axis-aligned with the display and is never

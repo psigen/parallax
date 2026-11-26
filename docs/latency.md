@@ -26,7 +26,7 @@ extrapolated from its filtered velocity to the moment the frame will be shown. P
   This is the latency prediction is trying to cancel.
 - `predicted lead`: the extrapolation actually applied this frame.
 
-Tuning (`g`): lower `min_cutoff_hz` for less jitter at rest, raise `beta` for less lag in motion,
+Tuning (`t`): lower `min_cutoff_hz` for less jitter at rest, raise `beta` for less lag in motion,
 raise `extra_lead_ms` if the scene still feels like it trails your head.
 
 ## Measured

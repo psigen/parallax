@@ -101,8 +101,8 @@ export const configSchema = z
     viewer: z.object({
       ipd_mm: z.number().positive(),
       rest_eye_mm: vec3,
-      /** null: the negated camera position, so a face centred in the camera reads x 0, y 0. */
-      eye_offset_mm: vec3.nullable().default(null),
+      /** Constant added to every tracked eye position; zero is the strict window. */
+      eye_offset_mm: vec3.default([0, 0, 0]),
     }),
     default_camera: z.string().min(1),
     cameras: z.array(cameraSchema).min(1),

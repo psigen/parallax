@@ -5,7 +5,9 @@ import type { ScreenRect } from '../math/offAxisProjection';
  * A rectangle and crosshair drawn exactly in the screen plane (z = 0), inset from the viewport
  * edges, as one-pixel lines. Anything on the glass must stay perfectly still on screen as the
  * eye moves; if this frame drifts, the viewport-to-physical mapping or the projection is wrong.
- * Key `w`, or `?glass=1`.
+ * A small diamond marks the vanishing point of lines parallel to the screen normal: the foot of
+ * the eye on the glass. Real-world lines running straight into the screen must converge there.
+ * Key `g`, or `?glass=1`.
  */
 export class GlassFrame extends LineSegments {
   constructor() {
@@ -23,8 +25,8 @@ export class GlassFrame extends LineSegments {
     this.visible = false;
   }
 
-  /** Update to the current viewport rectangle (metres). */
-  update(rectM: ScreenRect, insetM = 0.01): void {
+  /** Update to the current viewport rectangle and eye position (metres). */
+  update(rectM: ScreenRect, eyeM: { x: number; y: number }, insetM = 0.01): void {
     const l = rectM.left + insetM;
     const r = rectM.right - insetM;
     const b = rectM.bottom + insetM;
@@ -32,43 +34,21 @@ export class GlassFrame extends LineSegments {
     const cx = (l + r) / 2;
     const cy = (b + t) / 2;
     const c = 0.01;
+    const ex = eyeM.x;
+    const ey = eyeM.y;
+    // prettier-ignore
     const v = [
-      l,
-      b,
-      0,
-      r,
-      b,
-      0,
-      r,
-      b,
-      0,
-      r,
-      t,
-      0,
-      r,
-      t,
-      0,
-      l,
-      t,
-      0,
-      l,
-      t,
-      0,
-      l,
-      b,
-      0,
-      cx - c,
-      cy,
-      0,
-      cx + c,
-      cy,
-      0,
-      cx,
-      cy - c,
-      0,
-      cx,
-      cy + c,
-      0,
+      l, b, 0, r, b, 0,
+      r, b, 0, r, t, 0,
+      r, t, 0, l, t, 0,
+      l, t, 0, l, b, 0,
+      cx - c, cy, 0, cx + c, cy, 0,
+      cx, cy - c, 0, cx, cy + c, 0,
+      // Vanishing point diamond at the eye's foot on the glass.
+      ex - c, ey, 0, ex, ey + c, 0,
+      ex, ey + c, 0, ex + c, ey, 0,
+      ex + c, ey, 0, ex, ey - c, 0,
+      ex, ey - c, 0, ex - c, ey, 0,
     ];
     this.geometry.setAttribute('position', new Float32BufferAttribute(v, 3));
   }

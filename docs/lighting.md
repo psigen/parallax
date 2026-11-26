@@ -2,9 +2,9 @@
 
 The webcam looks out through the window into the viewer's room. For the scene behind the glass
 that image is the light arriving through the window, so it is used as the scene's lighting in
-two ways. Code: `src/lighting/`. Key `i` cycles off → environment → full. Tuning panel (`g`)
+two ways. Code: `src/lighting/`. Key `l` cycles off → environment → full. Tuning panel (`t`)
 has live controls; `config/default.yaml` section `lighting` has the defaults (off by default;
-`?lighting=full` or `i` turns it on).
+`?lighting=full` or `l` turns it on).
 
 ## 1. Environment map (`environmentMap.ts`)
 
@@ -62,7 +62,7 @@ to cast and receive shadows when `key_lights.shadows` is on; the renderer uses `
 
 ## Checking it
 
-Press `d` (camera preview) and `i` until the HUD says `full`. Detected sources are drawn as
+Press `d` (camera preview) and `l` until the HUD says `full`. Detected sources are drawn as
 circles on the preview with their estimated intensity. Hold a phone flashlight to your right: a
 circle appears, the HUD's `lighting` line lists a light with direction ≈ (+x, +z), and the
 room's −x side darkens with a shadow that follows the torch. Cover the camera: lights fade

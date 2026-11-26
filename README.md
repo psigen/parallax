@@ -18,29 +18,31 @@ The page asks for the webcam and starts tracking. Sit about half a metre from th
 
 - On macOS, turn **Center Stage off** and zoom to **1x** in the Video menu (menu-bar camera icon
   while the page uses the camera); otherwise the camera intrinsics drift at runtime.
-- Press `f` for fullscreen: the physical-size math is exact there. Press `c` once to calibrate
+- Press `F` for fullscreen: the physical-size math is exact there. Press `c` once to calibrate
   the focal length at a measured distance (see [docs/calibration.md](docs/calibration.md)).
 
-| Key | Action                                                                         |
-| --- | ------------------------------------------------------------------------------ |
-| `h` | latency HUD                                                                    |
-| `d` | camera debug view (mirrored feed, iris landmarks, depth)                       |
-| `t` | tracking scope: raw samples vs rendered eye over 3 s (lag, jitter, dropouts)   |
-| `w` | glass frame: lines drawn in the screen plane; must never move on screen        |
-| `i` | camera lighting: off → environment map → environment + key lights with shadows |
-| `g` | live tuning panel (filter, prediction)                                         |
-| `m` | 100 mm ruler square to verify the physical mapping                             |
-| `f` | fullscreen                                                                     |
-| `c` | calibrate focal length at a prompted distance                                  |
-| `x` | clear the stored calibration                                                   |
-| `o` | re-zero the vertical view: offset tracking so the current y reads 0            |
-| `O` | revert the eye offset to the default (negated camera position)                 |
-| `p` | copy a diagnostic snapshot to the clipboard                                    |
-| `r` | reset the filter                                                               |
+| Key             | Action                                                                                |
+| --------------- | ------------------------------------------------------------------------------------- |
+| `h`             | latency HUD                                                                           |
+| `d`             | camera debug view (mirrored feed, iris landmarks, depth)                              |
+| `s`             | tracking scope: raw samples vs rendered eye over 3 s (lag, jitter, dropouts)          |
+| `g`             | glass frame: lines drawn in the screen plane; must never move on screen               |
+| `l`             | camera lighting: off → environment map → environment + key lights with shadows        |
+| `t`             | live tuning panel (filter, prediction)                                                |
+| `r`             | 100 mm ruler square to verify the physical mapping                                    |
+| `F`             | fullscreen                                                                            |
+| `c`             | calibrate focal length at a prompted distance                                         |
+| `C`             | clear the stored calibration                                                          |
+| `o`             | re-zero the vertical view: offset tracking so the current y reads 0                   |
+| `O`             | revert the eye offset to the config value                                             |
+| arrows, `[` `]` | nudge the eye point by 1 mm (Shift 10) / depth by 10 mm (Shift 50); stored per camera |
+| `f`             | freeze the tracked eye position for alignment tests                                   |
+| `p`             | copy a diagnostic snapshot to the clipboard                                           |
+| `R`             | reset the filter                                                                      |
 
 URL parameters: `?tracker=mouse` (drive the eye with the mouse, wheel for distance),
 `?tracker=static&eye=250,0,550` (fixed eye), `?camera=mx-brio` (a camera id from the config),
-`?viewport=full` (assume the viewport is the whole display), `?lighting=off|environment|full` (camera lighting mode at start), `?scene=reference` (depth markers
+`?viewport=full` (assume the viewport is the whole display), `?eye_offset=0,0,0` (override the eye offset; zero = strict window), `?lighting=off|environment|full` (camera lighting mode at start), `?scene=reference` (depth markers
 out to 30 m for checking parallax against real objects) or `?scene=<url>` (another glTF).
 
 All physical parameters (display size, camera intrinsics and position, interpupillary distance,

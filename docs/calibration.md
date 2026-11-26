@@ -1,88 +1,101 @@
-# Calibration
+# Calibration and verification
 
-All numbers live in `config/default.yaml`. The ones that matter most, in order:
+All numbers live in `config/default.yaml`. Calibration overrides made at runtime (`c`, `o`,
+arrow nudges) are stored per camera in `localStorage` and printed as YAML lines to paste back
+into the config; `C` and `O` clear them. Keys referenced below are listed in the README.
 
-1. **Display size** (`screen.width_mm`, `height_mm`). Exact from the panel spec. For the
-   14-inch MacBook Pro: 3024 x 1964 px at 254 ppi → 302.4 x 196.4 mm.
+## 1. What matters, in order
+
+1. **Display size** (`screen.width_mm`, `height_mm`). Exact from the panel spec. 14-inch MacBook
+   Pro: 3024 x 1964 px at 254 ppi → 302.4 x 196.4 mm.
 2. **Focal length** (`cameras[].intrinsics.fx_px`, `fy_px`). Sets the absolute depth scale.
-   Not published by Apple; calibrate (below).
+   Not published by Apple; calibrate (section 3).
 3. **Camera position** (`cameras[].extrinsics.position_mm`). Shifts every eye estimate by a
-   constant; a few mm of error is harmless. The MacBook camera is in the notch, top centre:
-   `(0, 94.7, 0)`.
+   constant. The MacBook camera is in the notch, top centre: `(0, 94.7, 0)`.
 4. **IPD** (`viewer.ipd_mm`). Scales depth linearly. 63 mm is the adult average; measure yours
-   with a ruler in a mirror if you want better than ~5 % depth accuracy.
+   in a mirror with a ruler for better than ~5 % depth accuracy.
+5. **Eye offset** (`viewer.eye_offset_mm`, default `[0, 0, 0]`). A constant added to the tracked
+   eye. Zero is the strict window; anything else is a deliberate shift (section 5).
 
-## Before anything else: macOS Center Stage
+## 2. Before anything else: macOS Center Stage
 
 The 12 MP camera in M4 MacBooks crops and zooms the sensor digitally. With Center Stage on, the
 effective focal length changes _continuously_ as it reframes you, and no calibration can hold.
 While a page is using the camera, open the green camera icon in the menu bar (the Video menu)
 and set **Center Stage: off**, zoom **1x**. The setting is system-wide and persists.
 
-## Focal length
+## 3. Focal length (depth scale)
 
-Sit with your eyes a measured distance from the screen surface (a tape measure to the bridge of
-the nose; 500 mm is convenient), look straight at the camera, and press `c`. Enter the distance
-in mm. The app solves `fx = d_px · distance / IPD` from the current iris separation, applies it
-immediately, stores it in `localStorage` for this camera id, and prints the values to paste into
-the YAML. `x` clears the stored value. Repeat at two distances; if the results differ by more
-than a few percent, the camera is probably reframing (see above) or the IPD is off.
+Sit with your eyes a measured distance from the screen surface (tape measure to the bridge of
+the nose; 500 mm is convenient), look straight at the camera, press `c` and enter the distance.
+The app solves `fx = d_px · distance / IPD` from the current iris separation and applies it.
+Repeat at two distances; if the results differ by more than a few percent, the camera is
+reframing (section 2) or the IPD is off.
 
-A sanity check: after calibration the `depth` in the debug view (`d`) should track a tape measure
-to within a few cm from 300 to 900 mm.
+Check: the `depth` readout in the debug view (`d`) should track a tape measure within a few cm
+from 300 to 900 mm. Lateral tracking does **not** depend on the focal length (it cancels
+between depth and lateral position), so `eye mm` x can be right while z is wrong.
 
-## Diagnosing "the scale feels wrong"
+## 4. Viewport placement (physical mapping)
 
-Press `p` to copy a diagnostic snapshot (HUD, browser metrics, camera settings, the last
-tracker reading and the tracking config) to the clipboard; paste it into an issue or a chat.
-Then work through these, in order; each isolates one factor.
+Press `r` to draw a 100 mm square and measure it in both directions. If it is not 100 mm, the
+browser's screen metrics do not match the config's `width_mm`: in fullscreen use
+`?viewport=full`, windowed set `screen.viewport_override_mm`. The HUD `browser` line shows the
+raw metrics; on the 14-inch panel at default scaling `screen` is 1512 wide, and in fullscreen
+`inner` may be 945 tall if the browser leaves a band for the notch (the mapping accounts for it
+when `screenY`/`outerHeight` report it). If the square is right but the picture is not square,
+nothing else can be.
 
-1. **Is the depth right?** Open the debug view (`d`). Calibrate (`c`) at 500 mm, then move to
-   a measured 300 mm and 700 mm. The `depth` readout should match within ~5 %. If it drifts
-   more, suspect: Center Stage/zoom reframing (watch the preview: does the crop change?), an IPD
-   that is not yours, or large head yaw (the `yaw` readout should be near 0° when facing the
-   camera; toggle `yaw correction` in the tuning panel (`g`) and see if depth becomes stable).
-2. **Is the viewport mapping right?** `m` draws a 100 mm square; measure it. Compare the
-   `browser` HUD line in fullscreen: on a 14-inch MacBook Pro at default scaling, `inner` should
-   be 1512 wide. If the browser leaves a band for the notch, `inner` height is less than
-   `screen` height and the window is shifted down; the mapping handles that only if
-   `screenY`/`outerHeight` report it. `?viewport=full` ignores all of that and assumes the
-   viewport is the whole panel.
-3. **Is it geometry or perception?** The projection is exact for _one_ eye. Close one eye and
-   set `render for` in the tuning panel to that eye. If the window illusion is now convincing
-   (objects on the glass stay put, the room edges are rigid), the math is right and what felt
-   wrong with both eyes open is the stereo conflict: a flat display shows both eyes the same
-   image, which the brain reads as "flat", and it fights the motion parallax. That is inherent to
-   a monocular display.
-4. **Quantify the residual.** `parallax gain` scales the eye's lateral offset. If some gain other
-   than 1.0 "feels right" with one eye closed, the depth scale is off by roughly that factor:
-   objects behind the glass move by `Δx · d / (Z + d)`, so an under-estimated `Z` exaggerates
-   motion (you would prefer gain < 1). Re-check step 1.
-5. **Iris centres move with gaze.** The iris centre shifts a couple of mm as you look around the
-   screen, which is ~3–5 % of the separation: expect a few percent of depth wobble that follows
-   where you look. That is a limitation of the measurement, not the calibration.
+## 5. Eye offset and the centre of projection
 
-## "Far objects move with me"
+The renderer's eye point is the tracked iris centre plus `eye_offset_mm`. The true centre of
+projection is the eye's entrance pupil, which should coincide with the tracked point to about a
+millimetre; that is a claim to measure (section 6), not assume.
 
-Relative to your line of sight, nothing behind the glass should ever move _with_ you; an object
-at depth `d` behind the glass moves on the glass by `Δx · d / (Z + d)`, always less than your
-own `Δx`, so it swings against you, by less the farther it is, and infinity stays put. If far
-content follows you, either the lateral estimate is exaggerated or both eyes are open and the
-flat display's stereo cue is winning. Separate them objectively:
+- **Zero** is the geometrically exact window. A laptop display sits below eye level, so the
+  correct view looks slightly down into the scene (floor-heavy); that is right, and the scene is
+  never tilted to hide it (the screen is a flat plate, see
+  [scene-authoring.md](scene-authoring.md)).
+- **`o`** re-zeroes only the Y component at your current height, so looking at the screen
+  centre looks straight into the scene. It is a lie by exactly that amount and invalidates
+  every comparison with real-world geometry below. `O` reverts to the config value.
+- **Arrow keys** nudge the offset by 1 mm (Shift: 10 mm); `[` and `]` nudge depth by 10 mm
+  (Shift: 50 mm). The HUD `eye` line shows the offset in force.
+- With the offset at zero and your eyes level with the camera, `eye mm` y should read about
+  +95 (the camera's height above the display centre). A constant error points at
+  `extrinsics.position_mm`; one that grows with distance points at `extrinsics.rotation_deg`.
 
-1. Put a ruler on the desk. Move your head a measured 100 mm sideways and watch the HUD
-   `eye mm` x. It must change by ~100. If it changes by much more, the lateral estimate is
-   wrong: check the `browser` line (`screen` must be the panel the config describes, 1512 wide on
-   the 14-inch MacBook at default scaling; on an external monitor the config's `width_mm` is
-   wrong for it) and the `viewport` line (302.4 mm wide in fullscreen).
-2. Open `?scene=reference`: posts at 0.3, 1, 3, 10 and 30 m. Line up the 30 m bar with a real
-   object a few metres behind the laptop (a door frame, a wall corner) and move your head. The
-   two should stay together; the 0.3 m post should swing against you. If the 30 m bar outruns
-   the real object, the scale is exaggerated; measure step 1.
-3. Close one eye (and set `render for` to that eye in `g`). If far markers now hold still,
-   the geometry is right and the two-eyed impression was the stereo conflict.
+## 6. The parallels test (vanishing point)
 
-## The ruler-on-screen test (objective)
+Stand the display vertical on a flat table and lay real straight edges on the table running
+straight into the screen (parallel to its normal). Lines parallel to the screen normal, real or
+virtual, converge to one point on the glass: the foot of the eye, (eye x, eye y). With one eye
+closed, the box's floor lines and the real edges must appear to converge to the same point. The
+convergence does **not** depend on eye distance, so this test isolates the eye's lateral
+position. Press `g`: the diamond on the glass-plane frame marks the vanishing point the
+renderer is using; sight along a real edge and it should point there.
+
+Before judging, set up for one eye: offset zero (`O`, or `?eye_offset=0,0,0`) and, in the
+tuning panel (`t`), "render for" set to the open eye. The default is the midpoint of both
+irises, 31 mm from either eye, which puts the vanishing point 31 mm off sideways, an error no
+screen tilt can cancel.
+
+**Measuring the effective centre of projection.** Press `f` to freeze the tracked eye so jitter
+does not move the vanishing point. Nudge with the arrows (and `[` `]` for depth) until the
+virtual floor lines run into the real edges; read the offset off the HUD. Unfreeze (`f`), move
+to a clearly different distance, repeat.
+
+- Same offset at both distances: a real bias between the tracked point and the effective pupil
+  (or in `position_mm`). Keep it in the config.
+- Offset grows with distance: angular, so `rotation_deg`, or perception rather than geometry.
+- A depth nudge changes foreshortening (how fast tiles shrink), never the vanishing point.
+
+**Geometry or perception?** Photograph the screen with a phone lens at the eye's position, or
+look through a ~1.5 mm pinhole. A camera has no surface awareness and no accommodation; if the
+photo shows both families converging together, the geometry is correct and what the eye sees is
+the picture-surface effect ([lessons-learned.md](lessons-learned.md)).
+
+## 7. The ruler-on-screen test (parallax magnitude)
 
 Mark where an object appears on the screen, move your head a measured `Δx` sideways, mark again,
 and measure the shift with a ruler on the glass. With the eye `Z` from the screen:
@@ -93,39 +106,28 @@ and measure the shift with a ruler on the glass. With the eye `Z` from the scree
   (the room's yellow sphere, 50 mm in front: 10 mm; the reference scene's, 100 mm in front:
   22 mm).
 
-Lateral tracking does not depend on the focal length (it cancels between depth and lateral
-position), so `eye mm` x can be right while z is wrong. If the measured shifts are too small by
-a constant factor, `Z` is overestimated by about that factor: compare `eye mm` z with a tape
-measure and calibrate (`c`). A factor near 2 means the camera is in its wide (0.5x) mode.
+Nothing behind the glass ever moves _with_ you relative to your line of sight; infinity stays
+put. If measured shifts are too small by a constant factor, `Z` is overestimated by about that
+factor (section 3; a factor near 2 means the camera is in its wide 0.5x mode). If the shifts
+are right but far objects still _feel_ like they follow you, both eyes are open: a flat display
+tells both eyes everything is at screen distance, and the bezel is the dominant reference.
+`?scene=reference` (posts out to 30 m) lets you compare against a real object behind the laptop.
 
-## "Looking at the screen centre looks down into the scene"
+## 8. Other checks
 
-Expected for a true window below eye level, and the scene is deliberately never tilted to hide
-it (the screen is a flat plate; see [scene-authoring.md](scene-authoring.md)). The sanctioned
-adjustment is `viewer.eye_offset_mm`, a constant added to every tracked eye position. It
-defaults (`null`) to the negated camera position, so an eye centred in the camera image reads
-x 0, y 0: the view is "straight in" when you are on the camera's axis. Press `o` while sitting
-normally to re-zero only the Y component at your current height (x and z are never touched;
-the value is stored per camera and the console prints the YAML line). `O` reverts to the
-default. Set `[0, 0, 0]` for a strictly correct window measured from the display centre.
-Parallax from head _motion_ is unaffected by any of this.
+- **Lateral tracking**: move your head a measured 100 mm sideways; HUD `eye mm` x must change by
+  ~100. Much more means the `browser`/`viewport` lines describe a different panel than the config.
+- **Depth wobble with gaze**: the iris centre shifts a couple of mm as you look around, 3–5 % of
+  the separation, so expect a few percent of depth wobble that follows your gaze. A measurement
+  limit, not a calibration error.
+- **Snapshot**: `p` copies the HUD, browser metrics, camera settings, last tracker reading and
+  config to the clipboard for sharing.
 
-Checking the camera extrinsic: with `[0, 0, 0]` and your eyes level with the camera, the HUD
-`eye mm` y should read about +95 (the camera's height above the display centre). A consistent
-offset points at `extrinsics.position_mm`; an offset that grows with distance points at
-`extrinsics.rotation_deg` (camera pitch).
-
-## Viewport placement
-
-Press `m` to draw a 100 mm square. Measure it. If it is wrong, the browser's reported screen
-metrics do not match the config's `width_mm`; in fullscreen use `?viewport=full`, windowed use
-`screen.viewport_override_mm`.
-
-## Another camera
+## 9. Another camera
 
 Add an entry under `cameras:` with a `label_match` substring of the device name (see
 `navigator.mediaDevices.enumerateDevices()` in devtools, or the HUD log line after start),
-measure its lens position relative to the display centre, then calibrate the focal length as
-above. Select it with `?camera=<id>` or make it `default_camera`. The MX Brio profile in the
-default config is a starting point (1080p60; its FOV setting in Logi Options+ changes the
-focal length, so recalibrate after changing it).
+measure its lens position relative to the display centre, then calibrate the focal length as in
+section 3. Select it with `?camera=<id>` or make it `default_camera`. The MX Brio profile in the
+default config is a starting point (1080p60; its FOV setting in Logi Options+ changes the focal
+length, so recalibrate after changing it).

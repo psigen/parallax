@@ -18,9 +18,10 @@ getUserMedia ─▶ <video> ─▶ requestVideoFrameCallback ─▶ ImageBitmap 
      │
      ├─ eyeEstimator  : iris px + intrinsics + IPD  → eye position (mm, screen frame)
      ├─ OneEuroVec3   : smooth, estimate velocity    (timestamped by capture time)
-     └─ rAF loop      : predictor → eye at display time
+     └─ rAF loop      : predictor → eye at display time (+ eye_offset_mm, or frozen by `f`)
                         viewportRect → physical rect of the viewport
-                        OffAxisCamera.setEye/setScreen → render
+                        CameraLighting.tick → environment map (optional, `l`)
+                        OffAxisCamera.setEye/setScreen → render (+ glass frame, HUD, scope)
 ```
 
 The render loop runs at display refresh independent of the camera rate; prediction fills the gap

@@ -51,7 +51,7 @@ export class App {
 
   /** Render the scene for an eye and a screen rectangle, both in metres in the screen frame. */
   render(eyeM: Vec3, screenRectM: ScreenRect): void {
-    if (this.glassFrame.visible) this.glassFrame.update(screenRectM);
+    if (this.glassFrame.visible) this.glassFrame.update(screenRectM, eyeM);
     this.camera.setScreen(screenRectM);
     this.camera.setEye(eyeM);
     this.renderer.render(this.scene, this.camera);

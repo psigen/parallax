@@ -170,9 +170,11 @@ async function main(): Promise<void> {
     splatCount = loaded.splatCount;
     shownEntry = entryToShow;
     credit.set(entryToShow.credit, entryToShow.source_url);
+    const b = loaded.bounds;
+    const mm = (n: number) => Math.round(n * 1000);
     log(
       'info',
-      `[scene] ${entryToShow.name} (${entryToShow.kind}${splatCount ? `, ${splatCount.toLocaleString()} splats` : ''})${placementGroup ? `; ${placementYaml(placement)}` : ''}`,
+      `[scene] ${entryToShow.name} (${entryToShow.kind}${splatCount ? `, ${splatCount.toLocaleString()} splats` : ''})${placementGroup ? `; ${placementYaml(placement)}` : ''}; bounds mm x ${mm(b.min.x)}..${mm(b.max.x)} y ${mm(b.min.y)}..${mm(b.max.y)} z ${mm(b.min.z)}..${mm(b.max.z)}`,
     );
   }
   const applyPlacementLive = (): void => {

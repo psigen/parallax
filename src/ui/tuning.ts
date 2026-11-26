@@ -36,10 +36,10 @@ export class TuningPanel {
     l.add(lighting.key_lights.brightness, 'saturation_boost', 1, 6, 0.1).name('saturation boost');
     l.add(lighting.key_lights, 'smoothing_hz', 0.5, 10, 0.5).name('smoothing Hz');
     const s = this.gui.addFolder('scene placement');
-    s.add(placement, 'scale', 0.02, 2, 0.005).name('scale').onChange(onPlacementChange);
-    s.add(placement.position_mm, '0', -1000, 1000, 1).name('x mm').onChange(onPlacementChange);
-    s.add(placement.position_mm, '1', -1000, 1000, 1).name('y mm').onChange(onPlacementChange);
-    s.add(placement.position_mm, '2', -3000, 500, 1).name('z mm').onChange(onPlacementChange);
+    s.add(placement, 'scale', 0.005, 2, 0.001).name('scale').onChange(onPlacementChange);
+    s.add(placement.position_mm, '0', -5000, 5000, 1).name('x mm').onChange(onPlacementChange);
+    s.add(placement.position_mm, '1', -5000, 5000, 1).name('y mm').onChange(onPlacementChange);
+    s.add(placement.position_mm, '2', -20000, 1000, 1).name('z mm').onChange(onPlacementChange);
     s.add(placement.rotation_deg, '0', -180, 180, 0.5).name('pitch °').onChange(onPlacementChange);
     s.add(placement.rotation_deg, '1', -180, 180, 0.5).name('yaw °').onChange(onPlacementChange);
     s.add(placement.rotation_deg, '2', -180, 180, 0.5).name('roll °').onChange(onPlacementChange);

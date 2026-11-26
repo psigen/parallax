@@ -82,6 +82,24 @@ flat display's stereo cue is winning. Separate them objectively:
 3. Close one eye (and set `render for` to that eye in `g`). If far markers now hold still,
    the geometry is right and the two-eyed impression was the stereo conflict.
 
+## The parallels test (vanishing point)
+
+Stand the display vertical on a flat table and lay real straight edges on the table running
+straight into the screen (parallel to its normal). Lines parallel to the screen normal, real or
+virtual, converge to one point on the glass: the foot of the eye, (eye x, eye y). With one eye
+closed, the box's floor lines and the real edges must therefore appear to converge to the same
+point. The convergence does **not** depend on eye distance, so this test isolates the eye's
+lateral position.
+
+- Virtual lines converge more sharply than the real ones: the renderer places the eye lower
+  (or closer to the lines) than it is. The usual cause is the eye offset: it is a deliberate
+  lie and must be zero for any comparison with the real world. Press `O`, then use
+  `?eye_offset=0,0,0` (or set `viewer.eye_offset_mm: [0, 0, 0]`).
+- Press `w`: the diamond on the glass-plane frame marks the vanishing point the renderer is
+  using. Sight along a real edge; it should point at the diamond. If it misses by a constant
+  amount with the offset at zero, adjust `extrinsics.position_mm` (the vanishing point moves 1:1
+  with the eye estimate).
+
 ## The ruler-on-screen test (objective)
 
 Mark where an object appears on the screen, move your head a measured `Δx` sideways, mark again,

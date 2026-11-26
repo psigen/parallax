@@ -165,6 +165,12 @@ async function main(): Promise<void> {
   let eyeOffsetMm = defaultOffset();
   const storedY = readOffsetYOverride(cameraId);
   if (storedY !== undefined) eyeOffsetMm = v3(eyeOffsetMm.x, storedY, eyeOffsetMm.z);
+  // ?eye_offset=x,y,z overrides both config and stored values (e.g. 0,0,0 for a strict window).
+  const offsetParam = params.get('eye_offset');
+  if (offsetParam) {
+    const [ox = 0, oy = 0, oz = 0] = offsetParam.split(',').map(Number);
+    if ([ox, oy, oz].every(Number.isFinite)) eyeOffsetMm = v3(ox, oy, oz);
+  }
   log(
     'info',
     `[viewer] eye offset ${[eyeOffsetMm.x, eyeOffsetMm.y, eyeOffsetMm.z].map((n) => n.toFixed(1)).join(', ')} mm${storedY !== undefined ? ' (y stored)' : ''}`,

@@ -47,10 +47,25 @@ family is a Gaussian splat). `?intro=0` skips the dialog.
 | `D`             | ask the browser for the display's label (Window Management permission) and re-detect  |
 | `R`             | reset the filter                                                                      |
 
-URL parameters: `?tracker=mouse` (drive the eye with the mouse, wheel for distance),
-`?tracker=static&eye=250,0,550` (fixed eye), `?camera=mx-brio` (a camera id from the config),
-`?viewport=full` (assume the viewport is the whole display), `?intro=0` (skip the landing dialog), `?hud=1` (show the HUD at load), `?blink=0` (disable blink holding for comparison), `?device=<screen id>` (force an index entry), `?screen_mm=WxH` (pin the display size), `?eye_offset=0,0,0` (override the eye offset; zero = strict window), `?lighting=off|environment|full` (camera lighting mode at start), `?scene=racoon` (a Gaussian splat from the manifest; `?scene_scale=`, `?scene_pos=x,y,z`, `?scene_rot=` place it), `?scene=reference` (depth markers
-out to 30 m for checking parallax against real objects) or `?scene=<url>` (another glTF).
+### URL parameters
+
+| Parameter                                               | Effect                                                                                                                             |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `?scene=<id>`                                           | Scene from `config/scenes.yaml` (`room`, `racoon`), `reference` (depth posts out to 30 m), or a URL/path to a `.glb` or splat file |
+| `?scene_scale=`, `?scene_pos=x,y,z`, `?scene_rot=p,y,r` | Placement of a scene without a `window` node: uniform scale, position (mm), rotation (deg)                                         |
+| `?tracker=mouse`                                        | Drive the eye with the mouse (wheel for distance) instead of the camera                                                            |
+| `?tracker=static&eye=x,y,z`                             | Fixed eye position (mm), for screenshots and tests                                                                                 |
+| `?camera=<id>`                                          | Camera id from the resolved device (e.g. `logitech-mx-brio`)                                                                       |
+| `?device=<screen id>`                                   | Force a display entry from `config/devices.yaml` (remembered per screen)                                                           |
+| `?screen_mm=WxH`                                        | Pin the physical display size (mm)                                                                                                 |
+| `?viewport=full`                                        | Assume the viewport covers the whole display (exact in fullscreen)                                                                 |
+| `?eye_offset=x,y,z`                                     | Override the eye offset (mm); `0,0,0` is the strict window                                                                         |
+| `?blink=0`                                              | Disable blink holding and the separation guard (for comparison)                                                                    |
+| `?lighting=off\|environment\|full`                      | Camera-based lighting mode at start                                                                                                |
+| `?intro=0`                                              | Skip the landing dialog                                                                                                            |
+| `?hud=1`                                                | Show the HUD at load                                                                                                               |
+| `?glass=1`                                              | Show the screen-plane frame and vanishing-point marker at load                                                                     |
+| `?diag=1`                                               | Log the first tracker results in full (matrix included)                                                                            |
 
 The display and camera are detected at startup (screen size, pixel ratio, platform, GPU and
 camera labels matched against [`config/devices.yaml`](config/devices.yaml), rounding to the

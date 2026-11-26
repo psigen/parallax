@@ -6,3 +6,6 @@ dist/
 .env
 .env.*
 coverage/
+# Scene assets downloaded by `npm run fetch:scenes` (the bundled room.glb is committed)
+public/scenes/*
+!public/scenes/room.glb

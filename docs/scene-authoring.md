@@ -1,7 +1,9 @@
 # Scene authoring
 
-The app renders any glTF 2.0 scene (`.glb` or `.gltf`) given by `rendering.scene_url` in
-`config/default.yaml`. The loader is `src/render/sceneLoader.ts`.
+The app renders a glTF 2.0 scene (`.glb`/`.gltf`) or a Gaussian splat (`.spz`, `.sog`, `.ply`,
+`.splat`, `.ksplat`). Scenes are listed in `config/scenes.yaml` and selected by id with
+`rendering.scene` in `config/default.yaml` or `?scene=<id>` (a URL or path works too). The
+dispatcher is `src/render/sceneLoader.ts` (`loadSceneEntry`).
 
 ## Invariants
 
@@ -32,6 +34,47 @@ The app renders any glTF 2.0 scene (`.glb` or `.gltf`) given by `rendering.scene
    always adds a faint ambient.
 6. **Anything else is up to you**: materials, textures, vertex colours, animations (not played
    yet), nested nodes. Cameras other than `window` are ignored.
+
+## Placement (scenes without a `window` node, and every splat)
+
+Splat files carry no units, no up axis and no origin, and a glTF may lack a `window` node. Such
+scenes are positioned by a **placement**: uniform `scale`, `rotation_deg` (pitch, yaw, roll)
+and `position_mm` of the scene origin in the screen frame, applied in that order by
+`src/scenes/placement.ts`. Defaults come from the manifest entry, `rendering.placement` in
+`config/default.yaml` overrides fields, and `?scene_scale=`, `?scene_pos=x,y,z`,
+`?scene_rot=p,y,r` override per session. The tuning panel (`t`, "scene placement") adjusts
+live and logs the YAML line to paste into the manifest.
+
+The scale is how a room-sized capture becomes a diorama: `scale: 0.1667` shows a 3 m room as
+0.5 m behind the glass, viewed from one side like a window. Set `position_mm` so the
+interesting volume sits behind z = 0 (negative z), typically with the nearest surface 50 to
+100 mm behind the glass.
+
+## Gaussian splat scenes
+
+Rendered with [Spark](https://sparkjs.dev) (`@sparkjsdev/spark`, MIT), loaded lazily only when
+a splat scene is selected (about 3 MB). Spark projects splat centres with the camera's full
+projection matrix and takes the splat footprint from its diagonal terms; for our off-axis
+`frustum()` matrix the shear terms are constants that vanish in the Jacobian, so the window
+projection is exact and `OffAxisCamera` needs no changes. Sorting is radial (by distance from
+the eye) and lags the render by about a frame, invisible under head-tracked motion. Splats
+are unlit: the camera lighting affects only glTF materials. MSAA is disabled for splat scenes.
+
+Workflow for a new capture:
+
+1. Prefer `.spz` or `.sog` (10 to 20x smaller than PLY). Keep it to roughly 2 M splats or
+   fewer for 60 fps on a laptop; reduce in [SuperSplat](https://superspl.at/editor) if needed.
+2. Orientation and scale: SuperSplat's **Orient to Grid** and **Measure** fix the up axis and
+   real-world scale once; or leave the file alone and use `rotation_deg`/`scale` in the
+   placement. `.spz` is Y-up; PLY/SOG use the COLMAP frame, which Spark rotates on load.
+3. Hosting: assets are never committed. Upload the file as a GitHub release asset
+   (`gh release create assets-v1 file.sog` or `gh release upload assets-v1 file.sog`), add a
+   manifest entry with the download URL, `sha256` (printed by `npm run fetch:scenes` on first
+   download), `license`, `credit` and `source_url`. `npm run fetch:scenes` downloads into
+   `public/scenes/` before every build (CI does this too).
+4. Licence: only redistributable scenes (CC BY, CC0, MIT, Apache). CC BY requires visible
+   credit: the `credit` line is shown bottom-left whenever the scene is on screen, linking to
+   `source_url`.
 
 ## The screen is a flat plate
 

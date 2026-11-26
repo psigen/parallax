@@ -45,6 +45,12 @@ geometrically correct view. Priorities: projection correctness, then tracking la
   `src/device/index.ts`. **No specific device is hardcoded anywhere**; `config/default.yaml`
   says `auto`. To support a new machine, add an index entry and a test case
   (`docs/devices.md`, "Adding a device"); do not special-case it in code.
+- **Scenes and assets.** Scenes are manifest entries in `config/scenes.yaml` (glTF or Gaussian
+  splat via Spark). External assets are never committed: host them as GitHub release assets,
+  record URL, `sha256`, `license`, `credit`, `source_url` and a `placement`; `npm run
+fetch:scenes` downloads them before a build. Only redistributable licences; CC BY scenes must
+  keep their `credit` (shown on screen). A scene without a `window` node is positioned by its
+  placement (uniform scale, rotation, position), never by editing the asset in code.
 - **Pure math is renderer-independent.** `src/math/` has no Three.js imports and is fully unit
   tested; `src/render/` adapts it. The off-axis projection must keep the properties listed in
   `docs/projection-math.md`.

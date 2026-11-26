@@ -19,8 +19,8 @@ export class App {
   readonly glassFrame = new GlassFrame();
   private sceneRoot: Group | undefined;
 
-  constructor(container: HTMLElement, nearM: number, farM: number) {
-    this.renderer = new WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  constructor(container: HTMLElement, nearM: number, farM: number, antialias = true) {
+    this.renderer = new WebGLRenderer({ antialias, powerPreference: 'high-performance' });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping = ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.0;

@@ -140,7 +140,16 @@ export const configSchema = z
     }),
     tracking: trackingSchema,
     rendering: z.object({
-      scene_url: z.string().min(1),
+      /** A scene id from config/scenes.yaml, or a URL/path to a .glb or splat file. */
+      scene: z.string().min(1),
+      /** Overrides the manifest placement (uniform scale, rotation_deg, position_mm). */
+      placement: z
+        .object({
+          scale: z.number().positive().optional(),
+          rotation_deg: vec3.optional(),
+          position_mm: vec3.optional(),
+        })
+        .optional(),
       near_mm: z.number().positive(),
       far_mm: z.number().positive(),
     }),

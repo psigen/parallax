@@ -31,3 +31,11 @@ refactors are not recorded.
   the tracker reports zero samples and the worker-side analysis never runs; it looked like a
   worker bug. With `environment.enabled: false` the same build analyses every update. Use
   `npm run smoke` for boot/exception checks only; judge lighting on real hardware.
+- **Correct perspective still looks wrong to a single eye; a camera at the eye agrees with the
+  math.** Parallels test (2025-11-25): real straight edges on the table and the box's floor
+  lines did not look parallel by eye (virtual lines seemed to converge more sharply), at any
+  screen tilt, with the ruler square confirmed square. A phone photographed from the eye's
+  position showed both families converging together. The eye knows the panel is a surface at
+  550 mm (accommodation, bezel, pixel grid), and pictures are perceived partly as surfaces, which
+  compresses depicted depth. Before suspecting the projection: photograph from the eye position,
+  or look through a ~1.5 mm pinhole, which removes the accommodation cue and hides the bezel.

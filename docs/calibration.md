@@ -95,6 +95,10 @@ lateral position.
   (or closer to the lines) than it is. The usual cause is the eye offset: it is a deliberate
   lie and must be zero for any comparison with the real world. Press `O`, then use
   `?eye_offset=0,0,0` (or set `viewer.eye_offset_mm: [0, 0, 0]`).
+- If the lines still disagree by eye at every tilt, photograph the screen with a phone lens at
+  the eye's position, or look through a ~1.5 mm pinhole. If the photo (or the pinhole view)
+  shows the families converging together, the geometry is right and the disagreement is the
+  picture-surface effect described in [lessons-learned.md](lessons-learned.md).
 - Press `w`: the diamond on the glass-plane frame marks the vanishing point the renderer is
   using. Sight along a real edge; it should point at the diamond. If it misses by a constant
   amount with the offset at zero, adjust `extrinsics.position_mm` (the vanishing point moves 1:1

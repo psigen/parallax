@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "license": "MIT",
   "description": "Webcam head-tracked off-axis parallax 3D demo: the browser window behaves like a physical window into a scene.",
   "scripts": {
     "dev": "vite",

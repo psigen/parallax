@@ -11,7 +11,7 @@ export class CreditOverlay {
       padding: '3px 6px',
       background: 'rgba(0,0,0,0.5)',
       color: '#ddd',
-      font: '11px/1.3 ui-sans-serif, system-ui, sans-serif',
+      font: '11px/1.3 var(--font-ui)',
       pointerEvents: 'auto',
       display: 'none',
       maxWidth: '60vw',

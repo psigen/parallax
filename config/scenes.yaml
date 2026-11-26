@@ -27,13 +27,17 @@ scenes:
       rotation_deg: [0, 0, 0]
       position_mm: [0, -80, -350]
 
-  # Add the Bar (MipMap) capture once it is hosted as a release asset (docs/scene-authoring.md):
-  # - id: bar
-  #   name: Bar (MipMap)
-  #   kind: splat
-  #   url: https://github.com/psigen/parallax/releases/download/assets-v1/bar.sog
-  #   sha256: <sha256 of the file>
-  #   license: CC BY 4.0
-  #   credit: '"Bar (MipMap)" by <author> — CC BY 4.0, via superspl.at'
-  #   source_url: https://superspl.at/scene/c491d277
-  #   placement: { scale: 0.1667, rotation_deg: [0, 0, 0], position_mm: [0, -100, -250] }
+  - id: bar
+    name: Bar (MipMap)
+    kind: splat
+    # Hosted as a release asset (never committed): `gh release create assets-v1 bar.sog`.
+    url: https://github.com/psigen/parallax/releases/download/assets-v1/bar.sog
+    # sha256: <printed by `npm run fetch:scenes` after the first download; add it here>
+    license: CC BY 4.0
+    credit: '"Bar (MipMap)" by ethan3111 — CC BY 4.0, via superspl.at'
+    source_url: https://superspl.at/scene/c491d277
+    placement:
+      # 1/6 scale: the bar becomes a diorama about half a metre deep behind the glass.
+      scale: 0.1667
+      rotation_deg: [0, 0, 0]
+      position_mm: [0, -100, -250]

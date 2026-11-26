@@ -1,6 +1,7 @@
 /**
  * Downloads external scene assets listed in config/scenes.yaml into public/scenes/, verifying
  * sha256 when the manifest gives one (and printing it when it does not, so it can be filled in).
+ * A missing asset is a warning; a checksum mismatch is an error.
  * Assets are never committed; the build and the Pages workflow run this first.
  *
  *   npm run fetch:scenes
@@ -35,8 +36,8 @@ for (const entry of manifest.scenes) {
   console.log(`${entry.id}: downloading ${entry.url}`);
   const res = await fetch(entry.url, { redirect: 'follow' });
   if (!res.ok) {
-    console.error(`${entry.id}: HTTP ${res.status}`);
-    failed = true;
+    // A missing asset must not break the build: the scene just fails to load if selected.
+    console.warn(`${entry.id}: HTTP ${res.status}; skipping (the scene will be unavailable)`);
     continue;
   }
   const bytes = Buffer.from(await res.arrayBuffer());

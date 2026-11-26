@@ -70,7 +70,20 @@ and tuning live in [`config/default.yaml`](config/default.yaml); see
 | `npm run fetch:scenes` | Download external scene assets from `config/scenes.yaml` (run before `build`) |
 | `npm run fetch:models` | Re-download the MediaPipe face landmarker model                               |
 
+## Privacy
+
+The webcam video is processed entirely in the browser tab by a face-tracking model running on
+your machine. No frame is stored, uploaded, or shared, and nothing derived from the camera is
+sent anywhere. The only persisted data are calibration numbers (display, camera focal length,
+eye offset) in the browser's local storage, which contain no images. The landing dialog says
+the same and links to a short privacy note.
+
 ## Documentation
 
 See [`docs/README.md`](docs/README.md) for the architecture, coordinate conventions, projection
 math, tracking pipeline, calibration procedure and scene-authoring rules.
+
+## License
+
+MIT. See [LICENSE](LICENSE). Scene assets carry their own licences and credits, listed in
+[`config/scenes.yaml`](config/scenes.yaml) and shown on screen.

@@ -91,7 +91,10 @@ export class IntroOverlay {
     const button = document.createElement('button');
     button.textContent = 'Start';
     Object.assign(button.style, {
-      padding: '9px 22px',
+      display: 'block',
+      width: '100%',
+      marginTop: '22px',
+      padding: '12px 22px',
       background: '#4f8cff',
       color: '#fff',
       border: 'none',
@@ -99,7 +102,7 @@ export class IntroOverlay {
       font: '600 15px inherit',
       cursor: 'pointer',
     } satisfies Partial<CSSStyleDeclaration>);
-    row.append(label, select, button);
+    row.append(label, select);
 
     const hint = document.createElement('p');
     hint.innerHTML =
@@ -117,7 +120,29 @@ export class IntroOverlay {
       });
     }
 
-    card.append(h1, p, row, hint);
+    // Privacy note and modal: the camera frames never leave the browser.
+    const privacy = document.createElement('p');
+    Object.assign(privacy.style, {
+      margin: '14px 0 0',
+      fontSize: '12px',
+      color: '#8f9ab2',
+      textAlign: 'center',
+    });
+    const privacyLink = document.createElement('a');
+    privacyLink.href = '#privacy';
+    privacyLink.textContent = 'Privacy: the camera feed stays on your device';
+    Object.assign(privacyLink.style, {
+      color: '#aeb8cc',
+      textDecoration: 'underline',
+      cursor: 'pointer',
+    });
+    privacyLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      this.openPrivacy();
+    });
+    privacy.appendChild(privacyLink);
+
+    card.append(h1, p, row, hint, button, privacy);
     this.el.appendChild(card);
     parent.appendChild(this.el);
 
@@ -129,6 +154,71 @@ export class IntroOverlay {
       if (e.key === 'Enter') start();
     });
     button.focus();
+  }
+
+  /** A small modal spelling out what happens with the camera feed. */
+  private openPrivacy(): void {
+    const scrim = document.createElement('div');
+    Object.assign(scrim.style, {
+      position: 'fixed',
+      inset: '0',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'rgba(0,0,0,0.55)',
+      zIndex: '30',
+      font: 'inherit',
+    } satisfies Partial<CSSStyleDeclaration>);
+    const box = document.createElement('div');
+    Object.assign(box.style, {
+      maxWidth: '460px',
+      margin: '16px',
+      padding: '24px 28px',
+      background: '#101522',
+      border: '1px solid rgba(255,255,255,0.14)',
+      borderRadius: '12px',
+      color: '#e6ebf5',
+    } satisfies Partial<CSSStyleDeclaration>);
+    const title = document.createElement('h2');
+    title.textContent = 'Your camera, your computer';
+    Object.assign(title.style, { margin: '0 0 12px', font: '500 20px/1.2 inherit' });
+    const body = document.createElement('div');
+    body.innerHTML = `
+      <p style="margin:0 0 10px">The webcam video is processed entirely inside this browser tab, by a face-tracking
+      model running on your own machine. No frame is ever stored, uploaded, or shared, and the page
+      makes no network request that carries camera data. Close the tab and it's gone.</p>
+      <p style="margin:0 0 10px">The only things kept are a few calibration numbers (your display, your camera's focal
+      length, an eye-position offset) in this browser's local storage, so you don't have to redo them next
+      time. They contain no images and never leave your browser either.</p>
+      <p style="margin:0">Loading the page fetches the app, a font, and the 3D scenes from the web host, like any
+      website. That's all.</p>`;
+    const ok = document.createElement('button');
+    ok.textContent = 'Got it';
+    Object.assign(ok.style, {
+      display: 'block',
+      width: '100%',
+      marginTop: '18px',
+      padding: '10px',
+      background: '#2d3650',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '8px',
+      font: '500 14px inherit',
+      cursor: 'pointer',
+    } satisfies Partial<CSSStyleDeclaration>);
+    const close = () => scrim.remove();
+    ok.addEventListener('click', close);
+    scrim.addEventListener('click', (e) => {
+      if (e.target === scrim) close();
+    });
+    scrim.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') close();
+      e.stopPropagation();
+    });
+    box.append(title, body, ok);
+    scrim.appendChild(box);
+    this.el.appendChild(scrim);
+    ok.focus();
   }
 
   close(): void {
